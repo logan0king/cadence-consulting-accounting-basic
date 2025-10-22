@@ -42,10 +42,21 @@ namespace CadenceAccounting.Services
         {
             try
             {
+                _logger.LogInformation("Validating user: {Username}", username);
                 var user = await GetUserByUsernameAsync(username);
-                if (user == null) return false;
+                if (user == null) 
+                {
+                    _logger.LogWarning("User not found: {Username}", username);
+                    return false;
+                }
 
-                return BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+                _logger.LogInformation("User found: {Username}, IsActive: {IsActive}, EmailVerified: {EmailVerified}", 
+                    user.Username, user.IsActive, user.EmailVerified);
+                
+                var isValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+                _logger.LogInformation("Password verification result: {IsValid}", isValid);
+                
+                return isValid;
             }
             catch (Exception ex)
             {
@@ -70,8 +81,10 @@ namespace CadenceAccounting.Services
         public async Task<User> UpdateUserAsync(User user)
         {
             user.UpdatedAt = DateTime.UtcNow;
-            _context.Users.Update(user);
-            await _context.SaveChangesAsync();
+            
+            // Use raw SQL to avoid database trigger conflicts
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE Users SET Username = {user.Username}, Email = {user.Email}, FirstName = {user.FirstName}, LastName = {user.LastName}, Role = {user.Role}, IsActive = {user.IsActive}, EmailVerified = {user.EmailVerified}, UpdatedAt = {user.UpdatedAt} WHERE Id = {user.Id}");
 
             _logger.LogInformation("User {Username} updated successfully", user.Username);
             return user;

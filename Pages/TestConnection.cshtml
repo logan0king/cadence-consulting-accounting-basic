@@ -1,0 +1,61 @@
+@page
+@model CadenceAccounting.Pages.TestConnectionModel
+@{
+    ViewData["Title"] = "Database Connection Test";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        Database Connection Test
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger">
+                            <h5><i class="fas fa-exclamation-triangle me-2"></i>Connection Failed</h5>
+                            <p><strong>Error:</strong> @Model.ErrorMessage</p>
+                            <p><strong>Connection String:</strong> @Model.ConnectionString</p>
+                        </div>
+                    }
+                    else if (Model.IsConnected)
+                    {
+                        <div class="alert alert-success">
+                            <h5><i class="fas fa-check-circle me-2"></i>Connection Successful</h5>
+                            <p>Database connection is working properly.</p>
+                            <p><strong>Connection String:</strong> @Model.ConnectionString</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <h5><i class="fas fa-question-circle me-2"></i>Ready to Test</h5>
+                            <p>Click the button below to test the database connection.</p>
+                        </div>
+                    }
+
+                    <div class="d-grid gap-2">
+                        <a href="?test=true" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play me-2"></i>
+                            Test Database Connection
+                        </a>
+                        <a href="/Setup" class="btn btn-secondary">
+                            <i class="fas fa-cog me-2"></i>
+                            Go to Setup Page
+                        </a>
+                        <a href="/Account/Login" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Try Login Again
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

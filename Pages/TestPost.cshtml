@@ -1,0 +1,23 @@
+@page
+@model CadenceAccounting.Pages.TestPostModel
+@{
+    ViewData["Title"] = "Test POST";
+}
+
+<div class="container">
+    <h2>Test POST Endpoint</h2>
+    <form method="post">
+        <div class="mb-3">
+            <label for="testInput" class="form-label">Test Input:</label>
+            <input type="text" name="testInput" class="form-control" value="test value" />
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Test</button>
+    </form>
+    
+    @if (!string.IsNullOrEmpty(Model?.Result))
+    {
+        <div class="alert alert-success mt-3">
+            <strong>Result:</strong> @Model.Result
+        </div>
+    }
+</div>

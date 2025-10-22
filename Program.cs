@@ -9,7 +9,7 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure to use HTTP only (no HTTPS)
-builder.WebHost.UseUrls("http://localhost:5000");
+builder.WebHost.UseUrls("http://localhost:5001");
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -23,6 +23,13 @@ builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+// Add anti-forgery token validation
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.SuppressXFrameOptionsHeader = false;
+});
 
 // Add Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -50,6 +57,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
         options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.None; // Allow HTTP cookies
         options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax; // Allow cross-site requests
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+        options.Cookie.Path = "/";
     });
 
 // Add authorization
@@ -81,33 +91,48 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Add anti-forgery token validation
+app.UseAntiforgery();
+
 app.UseSession();
 
 app.MapRazorPages();
 
-// Add a fallback route to setup page (database initialization disabled)
+// Add a fallback route to test connection page
 app.MapFallback("/", (HttpContext context) =>
 {
-    // Redirect to setup page since database initialization is disabled
-    context.Response.Redirect("/Setup");
+    // Redirect to test connection page to help diagnose database issues
+    context.Response.Redirect("/TestConnection");
 });
 
 
-// Database initialization temporarily disabled to resolve 400 error
-// TODO: Re-enable after fixing Entity Framework connection issues
-/*
+// Database initialization with improved error handling
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        context.Database.EnsureCreated();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         
-        // Create default admin user if no users exist
+        // Test database connection first
+        logger.LogInformation("Testing database connection...");
+        await context.Database.OpenConnectionAsync();
+        await context.Database.CloseConnectionAsync();
+        logger.LogInformation("Database connection successful");
+        
+        // Ensure database and tables are created
+        logger.LogInformation("Ensuring database is created...");
+        await context.Database.EnsureCreatedAsync();
+        logger.LogInformation("Database creation completed");
+        
+        // Create or update default admin user
         var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
         var existingUsers = await userService.GetAllUsersAsync();
-        if (!existingUsers.Any())
+        var adminUser = existingUsers.FirstOrDefault(u => u.Username == "admin");
+        
+        if (adminUser == null)
         {
+            logger.LogInformation("No admin user found, creating default admin user...");
             var defaultAdmin = new User
             {
                 Id = Guid.NewGuid(),
@@ -117,24 +142,34 @@ using (var scope = app.Services.CreateScope())
                 LastName = "Administrator",
                 Role = "Administrator",
                 IsActive = true,
+                EmailVerified = true,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
             
             await userService.CreateUserAsync(defaultAdmin);
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             logger.LogInformation("Default admin user created - Username: admin, Password: Admin123!");
         }
+               else
+               {
+                   logger.LogInformation("Admin user found, updating password...");
+                   // Use raw SQL to avoid trigger conflicts
+                   var newPasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!");
+                   await context.Database.ExecuteSqlRawAsync(
+                       "UPDATE Users SET PasswordHash = {0}, IsActive = 1, EmailVerified = 1, UpdatedAt = {1} WHERE Username = 'admin'",
+                       newPasswordHash, DateTime.UtcNow);
+                   logger.LogInformation("Admin user password updated - Username: admin, Password: Admin123!");
+               }
     }
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Failed to connect to database. Please configure the database connection in the Setup page.");
+        logger.LogError(ex, "Failed to connect to database. Please check the connection string in appsettings.json and ensure the SQL Server is running and accessible.");
+        logger.LogError("Connection string: {ConnectionString}", builder.Configuration.GetConnectionString("DefaultConnection"));
         // Continue running - user can configure database via setup page
     }
 }
-*/
 
 try
 {

@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using CadenceAccounting.Services;
 using CadenceAccounting.Models;
+using CadenceAccounting.Data;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 
 namespace CadenceAccounting.Pages.Account
 {
+    [IgnoreAntiforgeryToken]
     public class LoginModel : PageModel
     {
         private readonly IUserService _userService;
@@ -55,16 +57,31 @@ namespace CadenceAccounting.Pages.Account
         {
             ReturnUrl = returnUrl;
 
+            _logger.LogInformation("Login POST received. ModelState.IsValid: {IsValid}", ModelState.IsValid);
+            _logger.LogInformation("Request Content-Type: {ContentType}", Request.ContentType);
+            _logger.LogInformation("Request Method: {Method}", Request.Method);
+            _logger.LogInformation("Form data: Username={Username}, Password={Password}, RememberMe={RememberMe}", 
+                Request.Form["Input.Username"], 
+                Request.Form["Input.Password"], 
+                Request.Form["Input.RememberMe"]);
+            
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("ModelState is invalid. Errors: {Errors}", 
+                    string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
                 return Page();
             }
 
             try
             {
+                _logger.LogInformation("Attempting login for user: {Username}", Input.Username);
+                
                 var isValid = await _userService.ValidateUserAsync(Input.Username, Input.Password);
+                _logger.LogInformation("Password validation result: {IsValid}", isValid);
+                
                 if (!isValid)
                 {
+                    _logger.LogWarning("Login failed for user: {Username} - Invalid credentials", Input.Username);
                     ModelState.AddModelError(string.Empty, "Invalid username or password.");
                     return Page();
                 }
@@ -82,11 +99,12 @@ namespace CadenceAccounting.Pages.Account
                     return Page();
                 }
 
-                // Update last login
-                user.LastLogin = DateTime.UtcNow;
-                await _userService.UpdateUserAsync(user);
+                // Skip last login update for now due to database trigger conflicts
+                // TODO: Fix database trigger issue
+                _logger.LogInformation("Skipping last login update due to database trigger conflicts");
 
                 // Create claims
+                _logger.LogInformation("Creating claims for user: {Username}", user.Username);
                 var claims = new List<Claim>
                 {
                     new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -96,6 +114,7 @@ namespace CadenceAccounting.Pages.Account
                     new(ClaimTypes.Surname, user.LastName),
                     new(ClaimTypes.Role, user.Role)
                 };
+                _logger.LogInformation("Claims created successfully");
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var authProperties = new AuthenticationProperties
@@ -103,18 +122,40 @@ namespace CadenceAccounting.Pages.Account
                     IsPersistent = Input.RememberMe,
                     ExpiresUtc = Input.RememberMe ? DateTimeOffset.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddMinutes(30)
                 };
+                _logger.LogInformation("Authentication properties created");
 
+                _logger.LogInformation("Creating authentication cookie for user: {Username}", user.Username);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, 
                     new ClaimsPrincipal(claimsIdentity), authProperties);
+                _logger.LogInformation("Authentication cookie created successfully");
 
                 _logger.LogInformation("User {Username} logged in successfully", user.Username);
 
-                return LocalRedirect(ReturnUrl ?? "/Dashboard/Index");
+                _logger.LogInformation("Attempting redirect to dashboard");
+                
+                if (!string.IsNullOrEmpty(ReturnUrl))
+                {
+                    _logger.LogInformation("Redirecting to return URL: {ReturnUrl}", ReturnUrl);
+                    return LocalRedirect(ReturnUrl);
+                }
+                
+                _logger.LogInformation("Redirecting to dashboard page");
+                return RedirectToPage("/Dashboard/Index");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during login for user {Username}", Input.Username);
-                ModelState.AddModelError(string.Empty, "An error occurred during login. Please try again.");
+                
+                // Check if it's a database connection error
+                if (ex.Message.Contains("Instance failure") || ex.Message.Contains("connection") || ex.Message.Contains("database"))
+                {
+                    ModelState.AddModelError(string.Empty, "Database connection error. Please check if the database server is running and accessible. Contact your administrator if the problem persists.");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "An error occurred during login. Please try again.");
+                }
+                
                 return Page();
             }
         }

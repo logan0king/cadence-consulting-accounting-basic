@@ -68,6 +68,10 @@ namespace CadenceAccounting.Pages.Dashboard
         {
             try
             {
+                _logger.LogInformation("Dashboard OnGetAsync called. User authenticated: {IsAuthenticated}", User.Identity?.IsAuthenticated);
+                _logger.LogInformation("User claims count: {ClaimsCount}", User.Claims.Count());
+                _logger.LogInformation("User name: {UserName}", User.Identity?.Name);
+                
                 await LoadDashboardData();
                 await CheckBudgetAlerts();
                 return Page();
@@ -84,7 +88,12 @@ namespace CadenceAccounting.Pages.Dashboard
         {
             var projects = await _projectService.GetAllProjectsAsync();
             var invoices = await _invoiceService.GetAllInvoicesAsync();
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            _logger.LogInformation("User ID claim value: {UserIdClaim}", userIdClaim);
+            
+            var userId = Guid.Parse(userIdClaim ?? Guid.Empty.ToString());
+            _logger.LogInformation("Parsed user ID: {UserId}", userId);
 
             // Calculate date ranges
             var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
