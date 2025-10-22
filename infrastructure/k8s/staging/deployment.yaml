@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cadence-accounting
+  namespace: staging
+  labels:
+    app: cadence-accounting
+    version: v1
+    environment: staging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cadence-accounting
+  template:
+    metadata:
+      labels:
+        app: cadence-accounting
+        version: v1
+        environment: staging
+    spec:
+      containers:
+      - name: cadence-accounting
+        image: ghcr.io/cadence-consulting/accounting-basic:staging
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "staging"
+        - name: PORT
+          value: "3000"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: cadence-accounting-secrets
+              key: db-host
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: cadence-accounting-secrets
+              key: db-name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: cadence-accounting-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cadence-accounting-secrets
+              key: db-password
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: cadence-accounting-secrets
+              key: redis-host
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cadence-accounting-secrets
+              key: redis-password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cadence-accounting-secrets
+              key: jwt-secret
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 1001
+      restartPolicy: Always
+

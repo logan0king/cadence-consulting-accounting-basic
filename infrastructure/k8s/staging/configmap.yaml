@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cadence-accounting-config
+  namespace: staging
+  labels:
+    app: cadence-accounting
+    environment: staging
+data:
+  NODE_ENV: "staging"
+  PORT: "3000"
+  API_VERSION: "v1"
+  API_PREFIX: "/api"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "combined"
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  BCRYPT_ROUNDS: "12"
+

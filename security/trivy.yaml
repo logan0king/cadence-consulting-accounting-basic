@@ -1,0 +1,71 @@
+# Trivy configuration for security scanning
+format: table
+severity: HIGH,CRITICAL
+exit-code: 1
+no-progress: true
+quiet: true
+
+# Vulnerability scanning
+vuln-type: os,library
+security-checks: vuln,config,secret
+
+# Secret scanning
+secret-config: |
+  rules:
+    - id: aws-access-key
+      pattern: AKIA[0-9A-Z]{16}
+      severity: CRITICAL
+    - id: aws-secret-key
+      pattern: [0-9a-zA-Z/+]{40}
+      severity: CRITICAL
+    - id: api-key
+      pattern: (api[_-]?key|apikey|api_key)\s*[:=]\s*['\"]?[a-zA-Z0-9]{20,}['\"]?
+      severity: HIGH
+    - id: jwt-secret
+      pattern: (jwt[_-]?secret|jwtsecret|jwt_secret)\s*[:=]\s*['\"]?[a-zA-Z0-9]{20,}['\"]?
+      severity: HIGH
+    - id: database-password
+      pattern: (db[_-]?password|database[_-]?password|dbpassword)\s*[:=]\s*['\"]?[a-zA-Z0-9]{8,}['\"]?
+      severity: HIGH
+
+# Config scanning
+config-policy: |
+  policies:
+    - id: dockerfile-security
+      title: Dockerfile Security Best Practices
+      severity: HIGH
+      rules:
+        - id: no-root-user
+          title: Container should not run as root
+          severity: HIGH
+          match:
+            - type: dockerfile
+              instruction: USER
+              value: root
+        - id: no-hardcoded-secrets
+          title: No hardcoded secrets in Dockerfile
+          severity: CRITICAL
+          match:
+            - type: dockerfile
+              instruction: ENV
+              value: ".*(password|secret|key).*"
+    
+    - id: kubernetes-security
+      title: Kubernetes Security Best Practices
+      severity: HIGH
+      rules:
+        - id: no-privileged-containers
+          title: Container should not run in privileged mode
+          severity: HIGH
+          match:
+            - type: kubernetes
+              field: spec.containers[].securityContext.privileged
+              value: true
+        - id: no-host-network
+          title: Pod should not use host network
+          severity: HIGH
+          match:
+            - type: kubernetes
+              field: spec.hostNetwork
+              value: true
+

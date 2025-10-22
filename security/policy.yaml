@@ -1,0 +1,111 @@
+# Security Policy Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-policy
+  namespace: cadence-accounting
+data:
+  # Network Policies
+  network-policy.yaml: |
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: cadence-accounting-network-policy
+      namespace: cadence-accounting
+    spec:
+      podSelector:
+        matchLabels:
+          app: cadence-accounting
+      policyTypes:
+      - Ingress
+      - Egress
+      ingress:
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        ports:
+        - protocol: TCP
+          port: 3000
+      egress:
+      - to:
+        - namespaceSelector:
+            matchLabels:
+              name: postgres
+        ports:
+        - protocol: TCP
+          port: 5432
+      - to:
+        - namespaceSelector:
+            matchLabels:
+              name: redis
+        ports:
+        - protocol: TCP
+          port: 6379
+      - to: []
+        ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+
+  # Pod Security Policy
+  pod-security-policy.yaml: |
+    apiVersion: policy/v1beta1
+    kind: PodSecurityPolicy
+    metadata:
+      name: cadence-accounting-psp
+    spec:
+      privileged: false
+      allowPrivilegeEscalation: false
+      requiredDropCapabilities:
+        - ALL
+      volumes:
+        - 'configMap'
+        - 'emptyDir'
+        - 'projected'
+        - 'secret'
+        - 'downwardAPI'
+        - 'persistentVolumeClaim'
+      runAsUser:
+        rule: 'MustRunAsNonRoot'
+      seLinux:
+        rule: 'RunAsAny'
+      fsGroup:
+        rule: 'RunAsAny'
+
+  # Security Context Constraints
+  scc.yaml: |
+    apiVersion: security.openshift.io/v1
+    kind: SecurityContextConstraints
+    metadata:
+      name: cadence-accounting-scc
+    allowHostDirVolumePlugin: false
+    allowHostIPC: false
+    allowHostNetwork: false
+    allowHostPID: false
+    allowHostPorts: false
+    allowPrivilegedContainer: false
+    allowedCapabilities: null
+    defaultAddCapabilities: null
+    fsGroup:
+      type: MustRunAs
+    readOnlyRootFilesystem: true
+    requiredDropCapabilities:
+    - ALL
+    runAsUser:
+      type: MustRunAsNonRoot
+    seLinuxContext:
+      type: MustRunAs
+    volumes:
+    - configMap
+    - downwardAPI
+    - emptyDir
+    - persistentVolumeClaim
+    - projected
+    - secret
+
