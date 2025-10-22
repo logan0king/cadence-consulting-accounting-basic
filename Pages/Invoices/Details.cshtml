@@ -1,0 +1,271 @@
+@page
+@model CadenceAccounting.Pages.Invoices.DetailsModel
+@{
+    ViewData["Title"] = "Invoice Details";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    @if (Model.Invoice != null)
+    {
+        <!-- Invoice Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>
+                        <i class="fas fa-file-invoice me-2"></i>
+                        Invoice @Model.Invoice.InvoiceNumber
+                    </h2>
+                    <div class="btn-group">
+                        <a href="/Invoices/Pdf/@Model.Invoice.Id" class="btn btn-outline-primary" target="_blank">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            Download PDF
+                        </a>
+                        <form method="post" asp-page-handler="SendEmail" asp-route-id="@Model.Invoice.Id" class="d-inline">
+                            <button type="submit" class="btn btn-outline-info">
+                                <i class="fas fa-envelope me-2"></i>
+                                Send Email
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Information -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Invoice Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Project Information</h6>
+                                <p><strong>Project:</strong> @Model.Invoice.Project.Name</p>
+                                <p><strong>Client:</strong> @Model.Invoice.Project.ClientName</p>
+                                <p><strong>Client Email:</strong> @Model.Invoice.Project.ClientEmail</p>
+                                @if (!string.IsNullOrEmpty(Model.Invoice.Project.ClientAddress))
+                                {
+                                    <p><strong>Client Address:</strong> @Model.Invoice.Project.ClientAddress</p>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Invoice Information</h6>
+                                <p><strong>Invoice Date:</strong> @Model.Invoice.InvoiceDate.ToString("MM/dd/yyyy")</p>
+                                <p><strong>Due Date:</strong> @Model.Invoice.DueDate.ToString("MM/dd/yyyy")</p>
+                                <p><strong>Status:</strong> 
+                                    @if (Model.Invoice.IsPaid)
+                                    {
+                                        <span class="badge bg-success">Paid</span>
+                                    }
+                                    else if (Model.Invoice.DueDate < DateTime.Today)
+                                    {
+                                        <span class="badge bg-danger">Overdue</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">@Model.Invoice.Status</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Financial Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span>@Model.Invoice.Subtotal.ToString("C")</span>
+                        </div>
+                        @if (Model.Invoice.TaxAmount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tax:</span>
+                                <span>@Model.Invoice.TaxAmount.ToString("C")</span>
+                            </div>
+                        }
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Total Amount:</strong>
+                            <strong>@Model.Invoice.TotalAmount.ToString("C")</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Paid:</span>
+                            <span class="text-success">@Model.Invoice.TotalPaid.ToString("C")</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <strong>Balance:</strong>
+                            <strong class="@(Model.Invoice.Balance > 0 ? "text-danger" : "text-success")">
+                                @Model.Invoice.Balance.ToString("C")
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Items -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Invoice Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Rate</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Invoice.InvoiceItems)
+                                    {
+                                        <tr>
+                                            <td>@item.Description</td>
+                                            <td>
+                                                <span class="badge @(item.ItemType == "Time" ? "bg-primary" : "bg-info")">
+                                                    @item.ItemType
+                                                </span>
+                                            </td>
+                                            <td>@item.Quantity.ToString("F2")</td>
+                                            <td>@item.Rate.ToString("C")</td>
+                                            <td>@item.Amount.ToString("C")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Section -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Payments</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Payments.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Method</th>
+                                            <th>Reference</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var payment in Model.Payments)
+                                        {
+                                            <tr>
+                                                <td>@payment.PaymentDate.ToString("MM/dd/yyyy")</td>
+                                                <td>@payment.Amount.ToString("C")</td>
+                                                <td>@payment.PaymentMethod</td>
+                                                <td>@payment.Reference</td>
+                                                <td>@payment.Notes</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-3">
+                                <i class="fas fa-credit-card fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-0">No payments recorded</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Add Payment</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" asp-page-handler="AddPayment">
+                            <div class="mb-3">
+                                <label asp-for="PaymentInput.Amount" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="PaymentInput.Amount" class="form-control" step="0.01" min="0.01" max="@Model.Invoice.Balance" />
+                                </div>
+                                <span asp-validation-for="PaymentInput.Amount" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label asp-for="PaymentInput.PaymentDate" class="form-label"></label>
+                                <input asp-for="PaymentInput.PaymentDate" class="form-control" />
+                                <span asp-validation-for="PaymentInput.PaymentDate" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label asp-for="PaymentInput.PaymentMethod" class="form-label"></label>
+                                <select asp-for="PaymentInput.PaymentMethod" class="form-select">
+                                    <option value="">Select method...</option>
+                                    <option value="Check">Check</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Credit Card">Credit Card</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <span asp-validation-for="PaymentInput.PaymentMethod" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label asp-for="PaymentInput.Reference" class="form-label"></label>
+                                <input asp-for="PaymentInput.Reference" class="form-control" placeholder="Check #, Transaction ID, etc." />
+                                <span asp-validation-for="PaymentInput.Reference" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label asp-for="PaymentInput.Notes" class="form-label"></label>
+                                <textarea asp-for="PaymentInput.Notes" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+                                <span asp-validation-for="PaymentInput.Notes" class="text-danger"></span>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-2"></i>
+                                Add Payment
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Invoice not found</h5>
+            <a href="/Invoices" class="btn btn-primary">Back to Invoices</a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

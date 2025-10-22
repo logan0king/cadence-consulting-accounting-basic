@@ -1,0 +1,332 @@
+@page
+@model CadenceAccounting.Pages.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Dashboard
+            </h2>
+            <p class="text-muted">Welcome back! Here's an overview of your accounting system.</p>
+        </div>
+    </div>
+
+    <!-- Budget Alerts -->
+    @if (Model.Dashboard.BudgetAlerts.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Budget Alerts
+                    </h5>
+                    <ul class="mb-0">
+                        @foreach (var alert in Model.Dashboard.BudgetAlerts.Take(3))
+                        {
+                            <li>
+                                @if (alert.AlertLevel == "Critical")
+                                {
+                                    <span class="badge bg-danger me-2">Critical</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning me-2">Warning</span>
+                                }
+                                @alert.Message
+                            </li>
+                        }
+                    </ul>
+                    @if (Model.Dashboard.BudgetAlerts.Count > 3)
+                    {
+                        <small class="text-muted">...and @(Model.Dashboard.BudgetAlerts.Count - 3) more alerts</small>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="card-title">Total Projects</div>
+                            <div class="card-value">@Model.Dashboard.TotalProjects</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-project-diagram fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="card-title">Active Projects</div>
+                            <div class="card-value">@Model.Dashboard.ActiveProjects</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-play-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="card-title">Total Budget</div>
+                            <div class="card-value">@Model.Dashboard.TotalBudget.ToString("C0")</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="card-title">Outstanding Invoices</div>
+                            <div class="card-value">@Model.Dashboard.OutstandingInvoices.ToString("C0")</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-invoice-dollar fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Budget Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Total Budget vs. Spent</h6>
+                            <div class="budget-progress mb-3">
+                                <div class="budget-progress-bar" style="width: @(Model.Dashboard.TotalBudget > 0 ? Math.Min(100, (Model.Dashboard.TotalSpent / Model.Dashboard.TotalBudget) * 100) : 0)%"></div>
+                                <div class="budget-progress-text">
+                                    @(Model.Dashboard.TotalBudget > 0 ? ((Model.Dashboard.TotalSpent / Model.Dashboard.TotalBudget) * 100).ToString("F1") : "0")%
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Spent: @Model.Dashboard.TotalSpent.ToString("C0")</small>
+                                <small class="text-muted">Budget: @Model.Dashboard.TotalBudget.ToString("C0")</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>This Month Activity</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="h4 text-primary">@Model.Dashboard.ThisMonthHours.ToString("F1")</div>
+                                        <small class="text-muted">Hours Tracked</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="h4 text-success">@Model.Dashboard.ThisMonthExpenses.ToString("C0")</div>
+                                        <small class="text-muted">Expenses</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Recent Time Entries
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Dashboard.RecentTimeEntries.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var entry in Model.Dashboard.RecentTimeEntries)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold">@entry.Project.Name</div>
+                                        <small class="text-muted">@entry.Description</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold">@entry.Hours.ToString("F1") hrs</div>
+                                        <small class="text-muted">@entry.Date.ToString("MM/dd")</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No recent time entries</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>
+                        Recent Expenses
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Dashboard.RecentExpenses.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var expense in Model.Dashboard.RecentExpenses)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold">@expense.Project.Name</div>
+                                        <small class="text-muted">@expense.Description</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold">@expense.Amount.ToString("C")</div>
+                                        <small class="text-muted">@expense.Date.ToString("MM/dd")</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <i class="fas fa-receipt fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No recent expenses</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Projects -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-project-diagram me-2"></i>
+                        Recent Projects
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Dashboard.RecentProjects.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Project</th>
+                                        <th>Client</th>
+                                        <th>Budget</th>
+                                        <th>Spent</th>
+                                        <th>Utilization</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var project in Model.Dashboard.RecentProjects)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a href="/Projects/Details/@project.Id" class="text-decoration-none">
+                                                    @project.Name
+                                                </a>
+                                            </td>
+                                            <td>@project.ClientName</td>
+                                            <td>@project.Budget.ToString("C0")</td>
+                                            <td>@project.TotalAmount.ToString("C0")</td>
+                                            <td>
+                                                <div class="budget-progress" style="height: 20px;">
+                                                    <div class="budget-progress-bar" style="width: @Math.Min(100, project.BudgetUtilization)%"></div>
+                                                    <div class="budget-progress-text">@project.BudgetUtilization.ToString("F1")%</div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (project.BudgetUtilization >= 100)
+                                                {
+                                                    <span class="badge bg-danger">Over Budget</span>
+                                                }
+                                                else if (project.BudgetUtilization >= 90)
+                                                {
+                                                    <span class="badge bg-warning">Near Limit</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">@project.Status</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <i class="fas fa-project-diagram fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No projects found</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-refresh dashboard every 5 minutes
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+    </script>
+}

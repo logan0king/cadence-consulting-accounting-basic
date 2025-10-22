@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\themes\\journal.css",
+      "PackagePath": "staticwebassets\\css\\themes\\journal.css"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.CadenceAccounting.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.CadenceAccounting.props",
+      "PackagePath": "build\\CadenceAccounting.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.CadenceAccounting.props",
+      "PackagePath": "buildMultiTargeting\\CadenceAccounting.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.CadenceAccounting.props",
+      "PackagePath": "buildTransitive\\CadenceAccounting.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

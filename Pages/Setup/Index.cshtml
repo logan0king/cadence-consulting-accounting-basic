@@ -1,0 +1,533 @@
+@page
+@model CadenceAccounting.Pages.Setup.IndexModel
+@{
+    ViewData["Title"] = "System Setup";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-cog me-2"></i>
+                System Setup
+            </h2>
+            <p class="text-muted">Configure your Cadence Accounting system settings.</p>
+        </div>
+    </div>
+
+    <!-- Setup Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="setupTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "database" ? "active" : "")" 
+                                    id="database-tab" data-bs-toggle="tab" data-bs-target="#database" type="button">
+                                <i class="fas fa-database me-2"></i>Database
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "company" ? "active" : "")" 
+                                    id="company-tab" data-bs-toggle="tab" data-bs-target="#company" type="button">
+                                <i class="fas fa-building me-2"></i>Company
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "invoice" ? "active" : "")" 
+                                    id="invoice-tab" data-bs-toggle="tab" data-bs-target="#invoice" type="button">
+                                <i class="fas fa-file-invoice me-2"></i>Invoice
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "tax" ? "active" : "")" 
+                                    id="tax-tab" data-bs-toggle="tab" data-bs-target="#tax" type="button">
+                                <i class="fas fa-percentage me-2"></i>Tax
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "email" ? "active" : "")" 
+                                    id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "bank" ? "active" : "")" 
+                                    id="bank-tab" data-bs-toggle="tab" data-bs-target="#bank" type="button">
+                                <i class="fas fa-university me-2"></i>Bank
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "backup" ? "active" : "")" 
+                                    id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button">
+                                <i class="fas fa-save me-2"></i>Backup
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "security" ? "active" : "")" 
+                                    id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
+                                <i class="fas fa-shield-alt me-2"></i>Security
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.ActiveTab == "theme" ? "active" : "")" 
+                                    id="theme-tab" data-bs-toggle="tab" data-bs-target="#theme" type="button">
+                                <i class="fas fa-palette me-2"></i>Theme
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="setupTabContent">
+                        <!-- Database Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "database" ? "show active" : "")" id="database">
+                            <form method="post" asp-page-handler="database">
+                                <div class="row mt-4">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label asp-for="DatabaseConfig.ConnectionString" class="form-label"></label>
+                                            <textarea asp-for="DatabaseConfig.ConnectionString" class="form-control" rows="3"></textarea>
+                                            <span asp-validation-for="DatabaseConfig.ConnectionString" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-grid">
+                                            <button type="button" class="btn btn-outline-primary" id="testConnectionBtn">
+                                                <i class="fas fa-plug me-2"></i>
+                                                Test Connection
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Database Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Company Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "company" ? "show active" : "")" id="company">
+                            <form method="post" asp-page-handler="company">
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="CompanyInfo.Name" class="form-label"></label>
+                                            <input asp-for="CompanyInfo.Name" class="form-control" />
+                                            <span asp-validation-for="CompanyInfo.Name" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="CompanyInfo.Email" class="form-label"></label>
+                                            <input asp-for="CompanyInfo.Email" class="form-control" />
+                                            <span asp-validation-for="CompanyInfo.Email" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="CompanyInfo.Phone" class="form-label"></label>
+                                            <input asp-for="CompanyInfo.Phone" class="form-control" />
+                                            <span asp-validation-for="CompanyInfo.Phone" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="CompanyInfo.Address" class="form-label"></label>
+                                            <textarea asp-for="CompanyInfo.Address" class="form-control" rows="3"></textarea>
+                                            <span asp-validation-for="CompanyInfo.Address" class="text-danger"></span>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="CompanyInfo.City" class="form-label"></label>
+                                                    <input asp-for="CompanyInfo.City" class="form-control" />
+                                                    <span asp-validation-for="CompanyInfo.City" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="CompanyInfo.State" class="form-label"></label>
+                                                    <input asp-for="CompanyInfo.State" class="form-control" />
+                                                    <span asp-validation-for="CompanyInfo.State" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="CompanyInfo.ZipCode" class="form-label"></label>
+                                                    <input asp-for="CompanyInfo.ZipCode" class="form-control" />
+                                                    <span asp-validation-for="CompanyInfo.ZipCode" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="CompanyInfo.TaxId" class="form-label"></label>
+                                                    <input asp-for="CompanyInfo.TaxId" class="form-control" />
+                                                    <span asp-validation-for="CompanyInfo.TaxId" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Company Information
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Invoice Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "invoice" ? "show active" : "")" id="invoice">
+                            <form method="post" asp-page-handler="invoice">
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="InvoiceConfig.InvoiceNumberFormat" class="form-label"></label>
+                                            <input asp-for="InvoiceConfig.InvoiceNumberFormat" class="form-control" />
+                                            <div class="form-text">Use {ProjectNumber}, {Year}, {SequentialNumber} as placeholders</div>
+                                            <span asp-validation-for="InvoiceConfig.InvoiceNumberFormat" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="InvoiceConfig.DefaultPaymentTerms" class="form-label"></label>
+                                            <input asp-for="InvoiceConfig.DefaultPaymentTerms" class="form-control" />
+                                            <span asp-validation-for="InvoiceConfig.DefaultPaymentTerms" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="InvoiceConfig.LateFeeRate" class="form-label"></label>
+                                            <div class="input-group">
+                                                <input asp-for="InvoiceConfig.LateFeeRate" class="form-control" step="0.1" min="0" max="100" />
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <span asp-validation-for="InvoiceConfig.LateFeeRate" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="InvoiceConfig.InvoiceFooterText" class="form-label"></label>
+                                            <textarea asp-for="InvoiceConfig.InvoiceFooterText" class="form-control" rows="3"></textarea>
+                                            <span asp-validation-for="InvoiceConfig.InvoiceFooterText" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Invoice Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Tax Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "tax" ? "show active" : "")" id="tax">
+                            <form method="post" asp-page-handler="tax">
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="TaxConfig.DefaultTaxType" class="form-label"></label>
+                                            <select asp-for="TaxConfig.DefaultTaxType" class="form-select">
+                                                <option value="1099">1099</option>
+                                                <option value="W2">W2</option>
+                                                <option value="Corp-to-Corp">Corp-to-Corp</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                            <span asp-validation-for="TaxConfig.DefaultTaxType" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="TaxConfig.FederalWithholdingRate" class="form-label"></label>
+                                            <div class="input-group">
+                                                <input asp-for="TaxConfig.FederalWithholdingRate" class="form-control" step="0.1" min="0" max="100" />
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <span asp-validation-for="TaxConfig.FederalWithholdingRate" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="TaxConfig.IllinoisStateTaxRate" class="form-label"></label>
+                                            <div class="input-group">
+                                                <input asp-for="TaxConfig.IllinoisStateTaxRate" class="form-control" step="0.1" min="0" max="100" />
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <span asp-validation-for="TaxConfig.IllinoisStateTaxRate" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="TaxConfig.SocialSecurityRate" class="form-label"></label>
+                                            <div class="input-group">
+                                                <input asp-for="TaxConfig.SocialSecurityRate" class="form-control" step="0.1" min="0" max="100" />
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                            <span asp-validation-for="TaxConfig.SocialSecurityRate" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Tax Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Email Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "email" ? "show active" : "")" id="email">
+                            <form method="post" asp-page-handler="email">
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="EmailConfig.SmtpServer" class="form-label"></label>
+                                            <input asp-for="EmailConfig.SmtpServer" class="form-control" />
+                                            <span asp-validation-for="EmailConfig.SmtpServer" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="EmailConfig.SmtpPort" class="form-label"></label>
+                                            <input asp-for="EmailConfig.SmtpPort" class="form-control" type="number" />
+                                            <span asp-validation-for="EmailConfig.SmtpPort" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="EmailConfig.Username" class="form-label"></label>
+                                            <input asp-for="EmailConfig.Username" class="form-control" />
+                                            <span asp-validation-for="EmailConfig.Username" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="EmailConfig.Password" class="form-label"></label>
+                                            <input asp-for="EmailConfig.Password" class="form-control" type="password" />
+                                            <span asp-validation-for="EmailConfig.Password" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="EmailConfig.FromName" class="form-label"></label>
+                                            <input asp-for="EmailConfig.FromName" class="form-control" />
+                                            <span asp-validation-for="EmailConfig.FromName" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            <input asp-for="EmailConfig.UseSsl" class="form-check-input" />
+                                            <label asp-for="EmailConfig.UseSsl" class="form-check-label"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-primary" id="testEmailBtn">
+                                        <i class="fas fa-envelope me-2"></i>
+                                        Test Email
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Email Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Bank Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "bank" ? "show active" : "")" id="bank">
+                            <form method="post" asp-page-handler="bank">
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="BankConfig.IntegrationMethod" class="form-label"></label>
+                                            <select asp-for="BankConfig.IntegrationMethod" class="form-select">
+                                                <option value="Manual">Manual Entry</option>
+                                                <option value="Plaid">Plaid Integration</option>
+                                            </select>
+                                            <span asp-validation-for="BankConfig.IntegrationMethod" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="BankConfig.PlaidEnvironment" class="form-label"></label>
+                                            <select asp-for="BankConfig.PlaidEnvironment" class="form-select">
+                                                <option value="sandbox">Sandbox</option>
+                                                <option value="development">Development</option>
+                                                <option value="production">Production</option>
+                                            </select>
+                                            <span asp-validation-for="BankConfig.PlaidEnvironment" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="BankConfig.PlaidClientId" class="form-label"></label>
+                                            <input asp-for="BankConfig.PlaidClientId" class="form-control" />
+                                            <span asp-validation-for="BankConfig.PlaidClientId" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="BankConfig.PlaidSecret" class="form-label"></label>
+                                            <input asp-for="BankConfig.PlaidSecret" class="form-control" type="password" />
+                                            <span asp-validation-for="BankConfig.PlaidSecret" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Bank Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Backup Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "backup" ? "show active" : "")" id="backup">
+                            <form method="post" asp-page-handler="backup">
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="BackupConfig.Frequency" class="form-label"></label>
+                                            <select asp-for="BackupConfig.Frequency" class="form-select">
+                                                <option value="Daily">Daily</option>
+                                                <option value="Weekly">Weekly</option>
+                                                <option value="Monthly">Monthly</option>
+                                            </select>
+                                            <span asp-validation-for="BackupConfig.Frequency" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="BackupConfig.Location" class="form-label"></label>
+                                            <input asp-for="BackupConfig.Location" class="form-control" />
+                                            <span asp-validation-for="BackupConfig.Location" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="BackupConfig.RetentionDays" class="form-label"></label>
+                                            <input asp-for="BackupConfig.RetentionDays" class="form-control" type="number" min="1" max="365" />
+                                            <span asp-validation-for="BackupConfig.RetentionDays" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Backup Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Security Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "security" ? "show active" : "")" id="security">
+                            <form method="post" asp-page-handler="security">
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="SecurityConfig.SessionTimeout" class="form-label"></label>
+                                            <div class="input-group">
+                                                <input asp-for="SecurityConfig.SessionTimeout" class="form-control" type="number" min="5" max="480" />
+                                                <span class="input-group-text">minutes</span>
+                                            </div>
+                                            <span asp-validation-for="SecurityConfig.SessionTimeout" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="SecurityConfig.PasswordPolicy" class="form-label"></label>
+                                            <select asp-for="SecurityConfig.PasswordPolicy" class="form-select">
+                                                <option value="Basic">Basic</option>
+                                                <option value="Strong">Strong</option>
+                                                <option value="Very Strong">Very Strong</option>
+                                            </select>
+                                            <span asp-validation-for="SecurityConfig.PasswordPolicy" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3 form-check">
+                                            <input asp-for="SecurityConfig.EnableAuditLogging" class="form-check-input" />
+                                            <label asp-for="SecurityConfig.EnableAuditLogging" class="form-check-label"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Security Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Theme Tab -->
+                        <div class="tab-pane fade @(Model.ActiveTab == "theme" ? "show active" : "")" id="theme">
+                            <form method="post" asp-page-handler="theme">
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="ThemeConfig.CurrentTheme" class="form-label"></label>
+                                            <select asp-for="ThemeConfig.CurrentTheme" class="form-select">
+                                                <option value="Journal">Journal (Default)</option>
+                                                <option value="Modern">Modern</option>
+                                                <option value="Classic">Classic</option>
+                                                <option value="Minimal">Minimal</option>
+                                            </select>
+                                            <span asp-validation-for="ThemeConfig.CurrentTheme" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="ThemeConfig.PrimaryColor" class="form-label"></label>
+                                            <input asp-for="ThemeConfig.PrimaryColor" class="form-control" type="color" />
+                                            <span asp-validation-for="ThemeConfig.PrimaryColor" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="ThemeConfig.SecondaryColor" class="form-label"></label>
+                                            <input asp-for="ThemeConfig.SecondaryColor" class="form-control" type="color" />
+                                            <span asp-validation-for="ThemeConfig.SecondaryColor" class="text-danger"></span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label asp-for="ThemeConfig.AccentColor" class="form-label"></label>
+                                            <input asp-for="ThemeConfig.AccentColor" class="form-control" type="color" />
+                                            <span asp-validation-for="ThemeConfig.AccentColor" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Save Theme Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            // Test database connection
+            $('#testConnectionBtn').click(function() {
+                var connectionString = $('#DatabaseConfig_ConnectionString').val();
+                
+                $.post('/Setup/TestConnection', { connectionString: connectionString })
+                    .done(function(response) {
+                        if (response.success) {
+                            alert('Connection successful!');
+                        } else {
+                            alert('Connection failed: ' + response.message);
+                        }
+                    })
+                    .fail(function() {
+                        alert('Error testing connection');
+                    });
+            });
+
+            // Test email connection
+            $('#testEmailBtn').click(function() {
+                $.post('/Setup/TestEmail')
+                    .done(function(response) {
+                        if (response.success) {
+                            alert('Email test successful!');
+                        } else {
+                            alert('Email test failed: ' + response.message);
+                        }
+                    })
+                    .fail(function() {
+                        alert('Error testing email');
+                    });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,39 @@
+{
+  "Version": 1,
+  "Hash": "lRMzTlCV07mVy3pFuEWnFLUQxLhIYK5EQm/IdP5+mX8=",
+  "Source": "CadenceAccounting",
+  "BasePath": "_content/CadenceAccounting",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "CadenceAccounting\\wwwroot",
+      "Source": "CadenceAccounting",
+      "ContentRoot": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\",
+      "BasePath": "_content/CadenceAccounting",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\themes\\journal.css",
+      "SourceId": "CadenceAccounting",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\",
+      "BasePath": "_content/CadenceAccounting",
+      "RelativePath": "css/themes/journal.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\themes\\journal.css"
+    }
+  ]
+}

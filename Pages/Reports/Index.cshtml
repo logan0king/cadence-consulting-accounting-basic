@@ -1,0 +1,280 @@
+@page
+@model CadenceAccounting.Pages.Reports.IndexModel
+@{
+    ViewData["Title"] = "Reports";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>
+                <i class="fas fa-chart-bar me-2"></i>
+                Reports
+            </h2>
+            <p class="text-muted">Generate comprehensive reports for your projects and financial data.</p>
+        </div>
+    </div>
+
+    <!-- Report Generator -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Generate Report</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="ReportRequest.ReportType" class="form-label"></label>
+                                <select asp-for="ReportRequest.ReportType" class="form-select">
+                                    <option value="ProjectSummary">Project Summary</option>
+                                    <option value="TimeTracking">Time Tracking</option>
+                                    <option value="ExpenseReport">Expense Report</option>
+                                    <option value="InvoiceReport">Invoice Report</option>
+                                    <option value="FinancialSummary">Financial Summary</option>
+                                </select>
+                                <span asp-validation-for="ReportRequest.ReportType" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="ReportRequest.ProjectId" class="form-label"></label>
+                                <select asp-for="ReportRequest.ProjectId" class="form-select">
+                                    <option value="">All Projects</option>
+                                    @foreach (var project in Model.Projects)
+                                    {
+                                        <option value="@project.Id">@project.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="ReportRequest.ProjectId" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label asp-for="ReportRequest.StartDate" class="form-label"></label>
+                                <input asp-for="ReportRequest.StartDate" class="form-control" />
+                                <span asp-validation-for="ReportRequest.StartDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label asp-for="ReportRequest.EndDate" class="form-label"></label>
+                                <input asp-for="ReportRequest.EndDate" class="form-control" />
+                                <span asp-validation-for="ReportRequest.EndDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">Actions</label>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-chart-line me-2"></i>
+                                        Generate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-check form-check-inline">
+                                    <input asp-for="ReportRequest.IncludeTimeEntries" class="form-check-input" />
+                                    <label asp-for="ReportRequest.IncludeTimeEntries" class="form-check-label"></label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input asp-for="ReportRequest.IncludeExpenses" class="form-check-input" />
+                                    <label asp-for="ReportRequest.IncludeExpenses" class="form-check-label"></label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input asp-for="ReportRequest.IncludeInvoices" class="form-check-input" />
+                                    <label asp-for="ReportRequest.IncludeInvoices" class="form-check-label"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Results -->
+    @if (Model.Report != null)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Report Results</h5>
+                        <form method="post" asp-page-handler="Export" class="d-inline">
+                            <input type="hidden" asp-for="ReportRequest.ReportType" />
+                            <input type="hidden" asp-for="ReportRequest.ProjectId" />
+                            <input type="hidden" asp-for="ReportRequest.StartDate" />
+                            <input type="hidden" asp-for="ReportRequest.EndDate" />
+                            <input type="hidden" asp-for="ReportRequest.IncludeTimeEntries" />
+                            <input type="hidden" asp-for="ReportRequest.IncludeExpenses" />
+                            <input type="hidden" asp-for="ReportRequest.IncludeInvoices" />
+                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download me-2"></i>
+                                Export CSV
+                            </button>
+                        </form>
+                    </div>
+                    <div class="card-body">
+                        <!-- Report Summary -->
+                        <div class="row mb-4">
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h4 text-primary">@Model.Report.TotalHours.ToString("F1")</div>
+                                    <small class="text-muted">Total Hours</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h4 text-success">@Model.Report.TotalTimeAmount.ToString("C0")</div>
+                                    <small class="text-muted">Time Revenue</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h4 text-warning">@Model.Report.TotalExpenses.ToString("C0")</div>
+                                    <small class="text-muted">Total Expenses</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h4 text-info">@Model.Report.TotalInvoiced.ToString("C0")</div>
+                                    <small class="text-muted">Total Invoiced</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h4 text-success">@Model.Report.TotalPaid.ToString("C0")</div>
+                                    <small class="text-muted">Total Paid</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="h4 @(Model.Report.NetProfit >= 0 ? "text-success" : "text-danger")">@Model.Report.NetProfit.ToString("C0")</div>
+                                    <small class="text-muted">Net Profit</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time Entries -->
+                        @if (Model.Report.TimeEntries.Any())
+                        {
+                            <div class="mb-4">
+                                <h6>Time Entries</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Project</th>
+                                                <th>Description</th>
+                                                <th>Hours</th>
+                                                <th>Rate</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var entry in Model.Report.TimeEntries.Take(10))
+                                            {
+                                                <tr>
+                                                    <td>@entry.Date.ToString("MM/dd/yyyy")</td>
+                                                    <td>@entry.Project.Name</td>
+                                                    <td>@entry.Description</td>
+                                                    <td>@entry.Hours.ToString("F2")</td>
+                                                    <td>@entry.Rate.ToString("C")</td>
+                                                    <td>@entry.Amount.ToString("C")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @if (Model.Report.TimeEntries.Count > 10)
+                                {
+                                    <small class="text-muted">Showing first 10 of @Model.Report.TimeEntries.Count entries</small>
+                                }
+                            </div>
+                        }
+
+                        <!-- Expenses -->
+                        @if (Model.Report.Expenses.Any())
+                        {
+                            <div class="mb-4">
+                                <h6>Expenses</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Project</th>
+                                                <th>Description</th>
+                                                <th>Category</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var expense in Model.Report.Expenses.Take(10))
+                                            {
+                                                <tr>
+                                                    <td>@expense.Date.ToString("MM/dd/yyyy")</td>
+                                                    <td>@expense.Project.Name</td>
+                                                    <td>@expense.Description</td>
+                                                    <td>@expense.Category</td>
+                                                    <td>@expense.Amount.ToString("C")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @if (Model.Report.Expenses.Count > 10)
+                                {
+                                    <small class="text-muted">Showing first 10 of @Model.Report.Expenses.Count entries</small>
+                                }
+                            </div>
+                        }
+
+                        <!-- Invoices -->
+                        @if (Model.Report.Invoices.Any())
+                        {
+                            <div class="mb-4">
+                                <h6>Invoices</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Invoice #</th>
+                                                <th>Date</th>
+                                                <th>Due Date</th>
+                                                <th>Amount</th>
+                                                <th>Paid</th>
+                                                <th>Balance</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var invoice in Model.Report.Invoices.Take(10))
+                                            {
+                                                <tr>
+                                                    <td>@invoice.InvoiceNumber</td>
+                                                    <td>@invoice.InvoiceDate.ToString("MM/dd/yyyy")</td>
+                                                    <td>@invoice.DueDate.ToString("MM/dd/yyyy")</td>
+                                                    <td>@invoice.TotalAmount.ToString("C")</td>
+                                                    <td>@invoice.TotalPaid.ToString("C")</td>
+                                                    <td>@invoice.Balance.ToString("C")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @if (Model.Report.Invoices.Count > 10)
+                                {
+                                    <small class="text-muted">Showing first 10 of @Model.Report.Invoices.Count entries</small>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
