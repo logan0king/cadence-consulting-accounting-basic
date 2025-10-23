@@ -111,8 +111,8 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.ProjectId" class="form-label"></label>
-                            <select asp-for="Input.ProjectId" class="form-select" id="projectSelect">
+                            <label for="Input.ProjectId" class="form-label">Project</label>
+                            <select name="Input.ProjectId" class="form-select" id="projectSelect">
                                 <option value="">Select a project...</option>
                                 @foreach (var project in Model.Projects)
                                 {
@@ -122,26 +122,26 @@
                             <span asp-validation-for="Input.ProjectId" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.Date" class="form-label"></label>
-                            <input asp-for="Input.Date" class="form-control" />
+                            <label for="Input.Date" class="form-label">Date</label>
+                            <input name="Input.Date" type="date" class="form-control" value="@Model.Input.Date.ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="Input.Date" class="text-danger"></span>
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label asp-for="Input.Hours" class="form-label"></label>
+                            <label for="Input.Hours" class="form-label">Hours</label>
                             <div class="input-group">
-                                <input asp-for="Input.Hours" class="form-control" step="0.25" min="0.1" max="24" />
+                                <input name="Input.Hours" type="number" class="form-control" step="0.1" min="0" max="24" value="@Model.Input.Hours" />
                                 <span class="input-group-text">hrs</span>
                             </div>
                             <span asp-validation-for="Input.Hours" class="text-danger"></span>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label asp-for="Input.Rate" class="form-label"></label>
+                            <label for="Input.Rate" class="form-label">Rate</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input asp-for="Input.Rate" class="form-control" step="0.01" min="0.01" />
+                                <input name="Input.Rate" type="number" class="form-control" step="0.01" min="0.01" value="@Model.Input.Rate" />
                             </div>
                             <span asp-validation-for="Input.Rate" class="text-danger"></span>
                         </div>
@@ -155,14 +155,14 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label asp-for="Input.Description" class="form-label"></label>
-                        <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Describe the work performed..."></textarea>
+                        <label for="Input.Description" class="form-label">Description</label>
+                        <textarea name="Input.Description" class="form-control" rows="3" placeholder="Describe the work performed...">@Model.Input.Description</textarea>
                         <span asp-validation-for="Input.Description" class="text-danger"></span>
                     </div>
                     
                     <div class="mb-3 form-check">
-                        <input asp-for="Input.IsBillable" class="form-check-input" />
-                        <label asp-for="Input.IsBillable" class="form-check-label"></label>
+                        <input name="Input.IsBillable" type="checkbox" class="form-check-input" @(Model.Input.IsBillable ? "checked" : "") />
+                        <label for="Input.IsBillable" class="form-check-label">Billable</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -178,7 +178,6 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script>
         $(document).ready(function() {
             // Auto-populate rate when project is selected
@@ -186,20 +185,24 @@
                 var selectedOption = $(this).find('option:selected');
                 var rate = selectedOption.data('rate');
                 if (rate) {
-                    $('#Input_Rate').val(rate);
+                    $('input[name="Input.Rate"]').val(rate);
                     calculateAmount();
                 }
             });
 
-            // Calculate amount when hours or rate changes
-            $('#Input_Hours, #Input_Rate').on('input', calculateAmount);
+            // Calculate amount when hours or rate changes (input event)
+            $('input[name="Input.Hours"], input[name="Input.Rate"]').on('input', calculateAmount);
+            
+            // Calculate amount when focus leaves hours or rate fields
+            $('input[name="Input.Hours"], input[name="Input.Rate"]').on('blur', calculateAmount);
 
             function calculateAmount() {
-                var hours = parseFloat($('#Input_Hours').val()) || 0;
-                var rate = parseFloat($('#Input_Rate').val()) || 0;
+                var hours = parseFloat($('input[name="Input.Hours"]').val()) || 0;
+                var rate = parseFloat($('input[name="Input.Rate"]').val()) || 0;
                 var amount = hours * rate;
                 $('#amountDisplay').val(amount.toFixed(2));
             }
+
 
             // Initialize amount calculation
             calculateAmount();

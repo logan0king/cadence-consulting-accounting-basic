@@ -1,4 +1,4 @@
-@page
+@page "/Projects/Details/{id:guid}"
 @model CadenceAccounting.Pages.Projects.DetailsModel
 @{
     ViewData["Title"] = "Project Details";
@@ -20,10 +20,14 @@
                         <p class="text-muted mb-0">@Model.Project.ProjectNumber</p>
                     </div>
                     <div class="btn-group">
-                        <a href="/TimeTracking/Index" class="btn btn-outline-primary">
-                            <i class="fas fa-clock me-2"></i>
-                            Add Time
+                        <a href="/Projects/Edit/@Model.Project.Id" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>
+                            Edit Project
                         </a>
+                            <a href="/TimeTracking/Add/@Model.Project.Id" class="btn btn-outline-primary">
+                                <i class="fas fa-clock me-2"></i>
+                                Add Time
+                            </a>
                         <a href="/Expenses/Index" class="btn btn-outline-success">
                             <i class="fas fa-receipt me-2"></i>
                             Add Expense

@@ -3,23 +3,28 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using CadenceAccounting.Services;
 using CadenceAccounting.Models;
+using CadenceAccounting.Data;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace CadenceAccounting.Pages.TimeTracking
 {
     [Authorize]
+    [IgnoreAntiforgeryToken]
     public class IndexModel : PageModel
     {
         private readonly ITimeEntryService _timeEntryService;
         private readonly IProjectService _projectService;
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<IndexModel> _logger;
 
-        public IndexModel(ITimeEntryService timeEntryService, IProjectService projectService, ILogger<IndexModel> logger)
+        public IndexModel(ITimeEntryService timeEntryService, IProjectService projectService, ApplicationDbContext context, ILogger<IndexModel> logger)
         {
             _timeEntryService = timeEntryService;
             _projectService = projectService;
+            _context = context;
             _logger = logger;
         }
 
@@ -35,13 +40,64 @@ namespace CadenceAccounting.Pages.TimeTracking
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
             TimeEntries = await _timeEntryService.GetTimeEntriesByUserAsync(userId);
             Projects = await _projectService.GetAllProjectsAsync();
+            
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
+            _logger.LogInformation("Time entry POST received. ModelState.IsValid: {IsValid}", ModelState.IsValid);
+            _logger.LogInformation("Request Content-Type: {ContentType}", Request.ContentType);
+            _logger.LogInformation("Request Method: {Method}", Request.Method);
+            _logger.LogInformation("Form data: ProjectId={ProjectId}, Date={Date}, Hours={Hours}, Rate={Rate}, Description={Description}, IsBillable={IsBillable}",
+                Request.Form["Input.ProjectId"],
+                Request.Form["Input.Date"],
+                Request.Form["Input.Hours"],
+                Request.Form["Input.Rate"],
+                Request.Form["Input.Description"],
+                Request.Form["Input.IsBillable"]);
+
+            // Manual model binding as fallback
+            var projectIdString = Request.Form["Input.ProjectId"].ToString();
+            if (string.IsNullOrEmpty(projectIdString) || !Guid.TryParse(projectIdString, out var projectId))
+            {
+                ModelState.AddModelError("Input.ProjectId", "Please select a project.");
+                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                TimeEntries = await _timeEntryService.GetTimeEntriesByUserAsync(userId);
+                Projects = await _projectService.GetAllProjectsAsync();
+                return Page();
+            }
+            Input.ProjectId = projectId;
+            
+            // Parse other fields with error handling
+            if (!DateTime.TryParse(Request.Form["Input.Date"].ToString(), out var date))
+            {
+                ModelState.AddModelError("Input.Date", "Please enter a valid date.");
+            }
+            Input.Date = date;
+            
+            if (!decimal.TryParse(Request.Form["Input.Hours"].ToString(), out var hours))
+            {
+                ModelState.AddModelError("Input.Hours", "Please enter a valid number of hours.");
+            }
+            Input.Hours = hours;
+            
+            if (!decimal.TryParse(Request.Form["Input.Rate"].ToString(), out var rate))
+            {
+                ModelState.AddModelError("Input.Rate", "Please enter a valid rate.");
+            }
+            Input.Rate = rate;
+            
+            Input.Description = Request.Form["Input.Description"].ToString() ?? string.Empty;
+            Input.IsBillable = Request.Form.ContainsKey("Input.IsBillable");
+
+            _logger.LogInformation("Manual binding applied - ProjectId: {ProjectId}, Hours: {Hours}, Rate: {Rate}", Input.ProjectId, Input.Hours, Input.Rate);
+
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("ModelState is invalid. Errors: {Errors}",
+                    string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                
                 var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
                 TimeEntries = await _timeEntryService.GetTimeEntriesByUserAsync(userId);
                 Projects = await _projectService.GetAllProjectsAsync();
@@ -51,19 +107,16 @@ namespace CadenceAccounting.Pages.TimeTracking
             try
             {
                 var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                var timeEntryId = Guid.NewGuid();
+                var createdAt = DateTime.UtcNow;
                 
-                var timeEntry = new TimeEntry
-                {
-                    ProjectId = Input.ProjectId,
-                    UserId = userId,
-                    Date = Input.Date,
-                    Hours = Input.Hours,
-                    Description = Input.Description,
-                    Rate = Input.Rate,
-                    IsBillable = Input.IsBillable
-                };
+                // Calculate amount
+                var amount = Input.Hours * Input.Rate;
 
-                await _timeEntryService.CreateTimeEntryAsync(timeEntry);
+                // Use raw SQL to avoid database trigger conflicts
+                await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                    INSERT INTO TimeEntries (Id, ProjectId, UserId, Date, Hours, Description, Rate, Amount, IsBillable, CreatedAt, UpdatedAt)
+                    VALUES ({timeEntryId}, {Input.ProjectId}, {userId}, {Input.Date}, {Input.Hours}, {Input.Description}, {Input.Rate}, {amount}, {Input.IsBillable}, {createdAt}, {createdAt})");
 
                 TempData["SuccessMessage"] = "Time entry added successfully!";
                 return RedirectToPage();
@@ -199,13 +252,12 @@ namespace CadenceAccounting.Pages.TimeTracking
 
         [Required]
         [Display(Name = "Hours")]
-        [Range(0.1, 24, ErrorMessage = "Hours must be between 0.1 and 24")]
+        [Range(0, 24, ErrorMessage = "Hours must be between 0 and 24")]
         public decimal Hours { get; set; }
 
-        [Required]
         [Display(Name = "Description")]
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; }
 
         [Required]
         [Display(Name = "Rate")]

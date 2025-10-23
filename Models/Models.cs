@@ -96,7 +96,6 @@ namespace CadenceAccounting.Models
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         
-        [Required]
         public Guid CompanyId { get; set; }
         
         [Required]
@@ -109,9 +108,8 @@ namespace CadenceAccounting.Models
         [StringLength(50)]
         public string ProjectNumber { get; set; } = string.Empty;
         
-        [Required]
         [StringLength(255)]
-        public string ClientName { get; set; } = string.Empty;
+        public string? ClientName { get; set; }
         
         [EmailAddress]
         [StringLength(255)]

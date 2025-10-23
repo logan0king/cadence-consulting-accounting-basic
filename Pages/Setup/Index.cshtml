@@ -110,43 +110,43 @@
 
                         <!-- Company Tab -->
                         <div class="tab-pane fade @(Model.ActiveTab == "company" ? "show active" : "")" id="company">
-                            <form method="post" asp-page-handler="company">
+                            <form method="post" action="?handler=company">
                                 <div class="row mt-4">
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label asp-for="CompanyInfo.Name" class="form-label"></label>
-                                            <input asp-for="CompanyInfo.Name" class="form-control" />
+                                            <label for="CompanyInfo.Name" class="form-label">Company Name</label>
+                                            <input name="CompanyInfo.Name" value="@Model.CompanyInfo.Name" class="form-control" />
                                             <span asp-validation-for="CompanyInfo.Name" class="text-danger"></span>
                                         </div>
                                         <div class="mb-3">
-                                            <label asp-for="CompanyInfo.Email" class="form-label"></label>
-                                            <input asp-for="CompanyInfo.Email" class="form-control" />
+                                            <label for="CompanyInfo.Email" class="form-label">Email</label>
+                                            <input name="CompanyInfo.Email" type="email" value="@Model.CompanyInfo.Email" class="form-control" />
                                             <span asp-validation-for="CompanyInfo.Email" class="text-danger"></span>
                                         </div>
                                         <div class="mb-3">
-                                            <label asp-for="CompanyInfo.Phone" class="form-label"></label>
-                                            <input asp-for="CompanyInfo.Phone" class="form-control" />
+                                            <label for="CompanyInfo.Phone" class="form-label">Phone</label>
+                                            <input name="CompanyInfo.Phone" value="@Model.CompanyInfo.Phone" class="form-control" />
                                             <span asp-validation-for="CompanyInfo.Phone" class="text-danger"></span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label asp-for="CompanyInfo.Address" class="form-label"></label>
-                                            <textarea asp-for="CompanyInfo.Address" class="form-control" rows="3"></textarea>
+                                            <label for="CompanyInfo.Address" class="form-label">Address</label>
+                                            <textarea name="CompanyInfo.Address" class="form-control" rows="3">@Model.CompanyInfo.Address</textarea>
                                             <span asp-validation-for="CompanyInfo.Address" class="text-danger"></span>
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label asp-for="CompanyInfo.City" class="form-label"></label>
-                                                    <input asp-for="CompanyInfo.City" class="form-control" />
+                                                    <label for="CompanyInfo.City" class="form-label">City</label>
+                                                    <input name="CompanyInfo.City" value="@Model.CompanyInfo.City" class="form-control" />
                                                     <span asp-validation-for="CompanyInfo.City" class="text-danger"></span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label asp-for="CompanyInfo.State" class="form-label"></label>
-                                                    <input asp-for="CompanyInfo.State" class="form-control" />
+                                                    <label for="CompanyInfo.State" class="form-label">State</label>
+                                                    <input name="CompanyInfo.State" value="@Model.CompanyInfo.State" class="form-control" />
                                                     <span asp-validation-for="CompanyInfo.State" class="text-danger"></span>
                                                 </div>
                                             </div>
@@ -154,15 +154,15 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label asp-for="CompanyInfo.ZipCode" class="form-label"></label>
-                                                    <input asp-for="CompanyInfo.ZipCode" class="form-control" />
+                                                    <label for="CompanyInfo.ZipCode" class="form-label">Zip Code</label>
+                                                    <input name="CompanyInfo.ZipCode" value="@Model.CompanyInfo.ZipCode" class="form-control" />
                                                     <span asp-validation-for="CompanyInfo.ZipCode" class="text-danger"></span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label asp-for="CompanyInfo.TaxId" class="form-label"></label>
-                                                    <input asp-for="CompanyInfo.TaxId" class="form-control" />
+                                                    <label for="CompanyInfo.TaxId" class="form-label">Tax ID</label>
+                                                    <input name="CompanyInfo.TaxId" value="@Model.CompanyInfo.TaxId" class="form-control" />
                                                     <span asp-validation-for="CompanyInfo.TaxId" class="text-danger"></span>
                                                 </div>
                                             </div>

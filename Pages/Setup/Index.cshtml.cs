@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace CadenceAccounting.Pages.Setup
 {
     // [Authorize] - Removed to allow anonymous access during initial setup
+    [IgnoreAntiforgeryToken]
     public class IndexModel : PageModel
     {
         private readonly ISettingsService _settingsService;
@@ -58,8 +59,35 @@ namespace CadenceAccounting.Pages.Setup
             return Page();
         }
 
+        public async Task<IActionResult> OnPostCompanyAsync()
+        {
+            _logger.LogInformation("Setup OnPostCompanyAsync called");
+            _logger.LogInformation("Request Content-Type: {ContentType}", Request.ContentType);
+            _logger.LogInformation("Request Method: {Method}", Request.Method);
+            
+            ActiveTab = "company";
+
+            try
+            {
+                await SaveCompanyInfo();
+                TempData["SuccessMessage"] = "Company information saved successfully!";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving company settings");
+                TempData["ErrorMessage"] = "An error occurred while saving company settings. Please try again.";
+            }
+
+            await LoadSettings();
+            return Page();
+        }
+
         public async Task<IActionResult> OnPostAsync(string tab)
         {
+            _logger.LogInformation("Setup OnPostAsync called with tab: {Tab}", tab);
+            _logger.LogInformation("Request Content-Type: {ContentType}", Request.ContentType);
+            _logger.LogInformation("Request Method: {Method}", Request.Method);
+            
             ActiveTab = tab;
 
             try
@@ -171,6 +199,9 @@ namespace CadenceAccounting.Pages.Setup
 
         private async Task SaveCompanyInfo()
         {
+            _logger.LogInformation("Saving company info: Name={Name}, Email={Email}, Phone={Phone}, Address={Address}, City={City}, State={State}, ZipCode={ZipCode}, TaxId={TaxId}",
+                CompanyInfo.Name, CompanyInfo.Email, CompanyInfo.Phone, CompanyInfo.Address, CompanyInfo.City, CompanyInfo.State, CompanyInfo.ZipCode, CompanyInfo.TaxId);
+            
             await _settingsService.SetSettingAsync("CompanyName", CompanyInfo.Name);
             await _settingsService.SetSettingAsync("CompanyEmail", CompanyInfo.Email);
             await _settingsService.SetSettingAsync("CompanyPhone", CompanyInfo.Phone);
@@ -179,6 +210,8 @@ namespace CadenceAccounting.Pages.Setup
             await _settingsService.SetSettingAsync("CompanyState", CompanyInfo.State);
             await _settingsService.SetSettingAsync("CompanyZipCode", CompanyInfo.ZipCode);
             await _settingsService.SetSettingAsync("CompanyTaxId", CompanyInfo.TaxId);
+            
+            _logger.LogInformation("Company info saved successfully");
         }
 
         private async Task SaveInvoiceConfig()

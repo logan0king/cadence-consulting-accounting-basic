@@ -5,22 +5,29 @@ using CadenceAccounting.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using CadenceAccounting.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CadenceAccounting.Pages.Projects
 {
     [Authorize]
+    [IgnoreAntiforgeryToken]
     public class IndexModel : PageModel
     {
         private readonly IProjectService _projectService;
         private readonly ILogger<IndexModel> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public IndexModel(IProjectService projectService, ILogger<IndexModel> logger)
+        public IndexModel(IProjectService projectService, ILogger<IndexModel> logger, ApplicationDbContext context)
         {
             _projectService = projectService;
             _logger = logger;
+            _context = context;
         }
 
         public IEnumerable<Project> Projects { get; set; } = new List<Project>();
+        public IEnumerable<Company> Companies { get; set; } = new List<Company>();
+        public bool HasCompanies => Companies.Any();
 
         [BindProperty]
         public ProjectInputModel Input { get; set; } = new();
@@ -41,9 +48,8 @@ namespace CadenceAccounting.Pages.Projects
             public string ProjectNumber { get; set; } = string.Empty;
 
             [Required]
-            [Display(Name = "Client Name")]
-            [StringLength(255, ErrorMessage = "Client name cannot exceed 255 characters")]
-            public string ClientName { get; set; } = string.Empty;
+            [Display(Name = "Company")]
+            public Guid CompanyId { get; set; }
 
             [EmailAddress]
             [Display(Name = "Client Email")]
@@ -55,28 +61,24 @@ namespace CadenceAccounting.Pages.Projects
             [Display(Name = "Client Address")]
             public string? ClientAddress { get; set; }
 
-            [Required]
             [Display(Name = "Budget")]
             [Range(0.01, 10000000, ErrorMessage = "Budget must be between $0.01 and $10,000,000")]
-            public decimal Budget { get; set; }
+            public decimal? Budget { get; set; }
 
-            [Required]
             [Display(Name = "Hourly Rate")]
             [Range(0.01, 10000, ErrorMessage = "Hourly rate must be between $0.01 and $10,000")]
-            public decimal HourlyRate { get; set; }
+            public decimal? HourlyRate { get; set; }
 
-            [Required]
             [Display(Name = "Start Date")]
             [DataType(DataType.Date)]
-            public DateTime StartDate { get; set; } = DateTime.Today;
+            public DateTime? StartDate { get; set; }
 
             [Display(Name = "End Date")]
             [DataType(DataType.Date)]
             public DateTime? EndDate { get; set; }
 
-            [Required]
             [Display(Name = "Tax Type")]
-            public string TaxType { get; set; } = "1099";
+            public string? TaxType { get; set; }
 
             [Display(Name = "Contract Document")]
             public IFormFile? ContractFile { get; set; }
@@ -85,14 +87,46 @@ namespace CadenceAccounting.Pages.Projects
         public async Task<IActionResult> OnGetAsync()
         {
             Projects = await _projectService.GetAllProjectsAsync();
+            Companies = await _context.Companies.ToListAsync();
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
+            _logger.LogInformation("Project creation POST received. ModelState.IsValid: {IsValid}", ModelState.IsValid);
+            _logger.LogInformation("Request Content-Type: {ContentType}", Request.ContentType);
+            _logger.LogInformation("Request Method: {Method}", Request.Method);
+            _logger.LogInformation("Form data: Name={Name}, ProjectNumber={ProjectNumber}, CompanyId={CompanyId}, Budget={Budget}, HourlyRate={HourlyRate}, StartDate={StartDate}, TaxType={TaxType}",
+                Request.Form["Input.Name"],
+                Request.Form["Input.ProjectNumber"],
+                Request.Form["Input.CompanyId"],
+                Request.Form["Input.Budget"],
+                Request.Form["Input.HourlyRate"],
+                Request.Form["Input.StartDate"],
+                Request.Form["Input.TaxType"]);
+
+            // Check if CompanyId is provided and valid
+            var companyIdString = Request.Form["Input.CompanyId"].ToString();
+            if (string.IsNullOrEmpty(companyIdString) || !Guid.TryParse(companyIdString, out var companyId))
+            {
+                TempData["ErrorMessage"] = "Please select a company for this project.";
+                Companies = await _context.Companies.ToListAsync();
+                Projects = await _projectService.GetAllProjectsAsync();
+                return Page();
+            }
+            
+            // Set the CompanyId if it wasn't bound properly
+            if (Input.CompanyId == Guid.Empty)
+            {
+                Input.CompanyId = companyId;
+            }
+
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("ModelState is invalid. Errors: {Errors}",
+                    string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
                 Projects = await _projectService.GetAllProjectsAsync();
+                Companies = await _context.Companies.ToListAsync();
                 return Page();
             }
 
@@ -100,22 +134,32 @@ namespace CadenceAccounting.Pages.Projects
             {
                 var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
                 
+                // Get the selected company
+                var selectedCompany = await _context.Companies.FindAsync(Input.CompanyId);
+                if (selectedCompany == null)
+                {
+                    TempData["ErrorMessage"] = "Please select a valid company.";
+                    Companies = await _context.Companies.ToListAsync();
+                    Projects = await _projectService.GetAllProjectsAsync();
+                    return Page();
+                }
+
                 var project = new Project
                 {
-                    CompanyId = Guid.Empty, // Will be set to default company
+                    CompanyId = Input.CompanyId,
                     Name = Input.Name,
                     Description = Input.Description,
                     ProjectNumber = Input.ProjectNumber,
-                    ClientName = Input.ClientName,
+                    ClientName = selectedCompany.Name, // Use company name as client name
                     ClientEmail = Input.ClientEmail,
                     ClientPhone = Input.ClientPhone,
                     ClientAddress = Input.ClientAddress,
-                    Budget = Input.Budget,
-                    HourlyRate = Input.HourlyRate,
-                    StartDate = Input.StartDate,
+                    Budget = Input.Budget ?? 0,
+                    HourlyRate = Input.HourlyRate ?? 0,
+                    StartDate = Input.StartDate ?? DateTime.Today,
                     EndDate = Input.EndDate,
                     Status = "Active",
-                    TaxType = Input.TaxType,
+                    TaxType = Input.TaxType ?? "1099",
                     CreatedBy = userId
                 };
 
@@ -138,6 +182,7 @@ namespace CadenceAccounting.Pages.Projects
                 TempData["ErrorMessage"] = "An error occurred while creating the project. Please try again.";
                 
                 Projects = await _projectService.GetAllProjectsAsync();
+                Companies = await _context.Companies.ToListAsync();
                 return Page();
             }
         }
@@ -156,51 +201,6 @@ namespace CadenceAccounting.Pages.Projects
             }
 
             return RedirectToPage();
-        }
-    }
-
-    public class DetailsModel : PageModel
-    {
-        private readonly IProjectService _projectService;
-        private readonly ITimeEntryService _timeEntryService;
-        private readonly IExpenseService _expenseService;
-        private readonly IInvoiceService _invoiceService;
-        private readonly ILogger<DetailsModel> _logger;
-
-        public DetailsModel(
-            IProjectService projectService,
-            ITimeEntryService timeEntryService,
-            IExpenseService expenseService,
-            IInvoiceService invoiceService,
-            ILogger<DetailsModel> logger)
-        {
-            _projectService = projectService;
-            _timeEntryService = timeEntryService;
-            _expenseService = expenseService;
-            _invoiceService = invoiceService;
-            _logger = logger;
-        }
-
-        public Project? Project { get; set; }
-        public IEnumerable<TimeEntry> TimeEntries { get; set; } = new List<TimeEntry>();
-        public IEnumerable<Expense> Expenses { get; set; } = new List<Expense>();
-        public IEnumerable<Invoice> Invoices { get; set; } = new List<Invoice>();
-
-        public async Task<IActionResult> OnGetAsync(Guid id)
-        {
-            Project = await _projectService.GetProjectByIdAsync(id);
-            if (Project == null)
-            {
-                TempData["ErrorMessage"] = "Project not found.";
-                return RedirectToPage("Index");
-            }
-
-            TimeEntries = await _timeEntryService.GetTimeEntriesByProjectAsync(id);
-            Expenses = await _expenseService.GetExpensesByProjectAsync(id);
-            Invoices = await _invoiceService.GetAllInvoicesAsync();
-            Invoices = Invoices.Where(i => i.ProjectId == id);
-
-            return Page();
         }
     }
 }

@@ -1,0 +1,186 @@
+@page "/TimeTracking/Add/{projectId:guid}"
+@model CadenceAccounting.Pages.TimeTracking.AddTimeModel
+@{
+    ViewData["Title"] = "Add Time Entry";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="fas fa-clock me-2"></i>
+                        Add Time Entry
+                    </h2>
+                    <p class="text-muted mb-0">Project: <strong>@Model.Project?.Name</strong></p>
+                </div>
+                <a asp-page="/Projects/Details" asp-route-id="@Model.ProjectId" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Project
+                </a>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (Model.Project != null)
+            {
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Time Entry Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            <input type="hidden" name="Input.ProjectId" value="@Model.ProjectId" />
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="Input.Date" class="form-label">Date</label>
+                                    <input name="Input.Date" type="date" class="form-control" value="@Model.Input.Date.ToString("yyyy-MM-dd")" />
+                                    <span asp-validation-for="Input.Date" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="Input.Hours" class="form-label">Hours</label>
+                                    <div class="input-group">
+                                        <input name="Input.Hours" type="number" class="form-control" step="0.1" min="0" max="24" value="@Model.Input.Hours" />
+                                        <span class="input-group-text">hrs</span>
+                                    </div>
+                                    <span asp-validation-for="Input.Hours" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="Input.Rate" class="form-label">Rate</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input name="Input.Rate" type="number" class="form-control" step="0.01" min="0.01" value="@Model.Input.Rate" />
+                                    </div>
+                                    <span asp-validation-for="Input.Rate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control" id="amountDisplay" readonly />
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check mt-4">
+                                        <input name="Input.IsBillable" type="checkbox" class="form-check-input" @(Model.Input.IsBillable ? "checked" : "") />
+                                        <label for="Input.IsBillable" class="form-check-label">Billable</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="Input.Description" class="form-label">Description</label>
+                                <textarea name="Input.Description" class="form-control" rows="3" placeholder="Describe the work performed...">@Model.Input.Description</textarea>
+                                <span asp-validation-for="Input.Description" class="text-danger"></span>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    Save Time Entry
+                                </button>
+                                <a asp-page="/Projects/Details" asp-route-id="@Model.ProjectId" class="btn btn-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Time Entries for this Project -->
+                @if (Model.RecentTimeEntries.Any())
+                {
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Recent Time Entries for this Project</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Hours</th>
+                                            <th>Rate</th>
+                                            <th>Amount</th>
+                                            <th>Billable</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var entry in Model.RecentTimeEntries)
+                                        {
+                                            <tr>
+                                                <td>@entry.Date.ToString("MM/dd/yyyy")</td>
+                                                <td>@entry.Description</td>
+                                                <td>@entry.Hours.ToString("F2")</td>
+                                                <td>@entry.Rate.ToString("C")</td>
+                                                <td>@entry.Amount.ToString("C")</td>
+                                                <td>
+                                                    @if (entry.IsBillable)
+                                                    {
+                                                        <span class="badge bg-success">Yes</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">No</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Project not found</h5>
+                    <a asp-page="/Projects/Index" class="btn btn-primary">Back to Projects</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Calculate amount when hours or rate changes
+            $('input[name="Input.Hours"], input[name="Input.Rate"]').on('input blur', calculateAmount);
+
+            function calculateAmount() {
+                var hours = parseFloat($('input[name="Input.Hours"]').val()) || 0;
+                var rate = parseFloat($('input[name="Input.Rate"]').val()) || 0;
+                var amount = hours * rate;
+                $('#amountDisplay').val(amount.toFixed(2));
+            }
+
+            // Initialize amount calculation
+            calculateAmount();
+        });
+    </script>
+}

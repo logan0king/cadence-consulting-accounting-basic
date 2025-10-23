@@ -91,7 +91,7 @@
                                                     <a href="/Projects/Details/@project.Id" class="btn btn-outline-primary" title="View Details">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <form method="post" asp-page-handler="Delete" asp-route-id="@project.Id" class="d-inline">
+                                                    <form method="post" action="?handler=Delete&id=@project.Id" class="d-inline">
                                                         <button type="submit" class="btn btn-outline-danger" 
                                                                 onclick="return confirm('Are you sure you want to delete this project?')" title="Delete">
                                                             <i class="fas fa-trash"></i>
@@ -130,49 +130,63 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" enctype="multipart/form-data">
+            <form method="post">
                 <div class="modal-body">
+                    @if (!Model.HasCompanies)
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>No Companies Found!</strong> You must create at least one company before you can create projects. 
+                            Please go to <a href="/Setup" class="alert-link">System Setup</a> to add companies first.
+                        </div>
+                    }
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.Name" class="form-label"></label>
-                            <input asp-for="Input.Name" class="form-control" placeholder="Enter project name..." />
+                            <label for="Input.Name" class="form-label">Project Name</label>
+                            <input name="Input.Name" class="form-control" placeholder="Enter project name..." />
                             <span asp-validation-for="Input.Name" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.ProjectNumber" class="form-label"></label>
-                            <input asp-for="Input.ProjectNumber" class="form-control" placeholder="Enter project number..." />
+                            <label for="Input.ProjectNumber" class="form-label">Project Number</label>
+                            <input name="Input.ProjectNumber" class="form-control" placeholder="Enter project number..." />
                             <span asp-validation-for="Input.ProjectNumber" class="text-danger"></span>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label asp-for="Input.Description" class="form-label"></label>
-                        <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Describe the project..."></textarea>
+                        <label for="Input.Description" class="form-label">Description</label>
+                        <textarea name="Input.Description" class="form-control" rows="3" placeholder="Describe the project..."></textarea>
                         <span asp-validation-for="Input.Description" class="text-danger"></span>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.ClientName" class="form-label"></label>
-                            <input asp-for="Input.ClientName" class="form-control" placeholder="Enter client name..." />
-                            <span asp-validation-for="Input.ClientName" class="text-danger"></span>
+                            <label for="Input.CompanyId" class="form-label">Company</label>
+                            <select name="Input.CompanyId" class="form-select" @(Model.HasCompanies ? "" : "disabled")>
+                                <option value="">-- Select Company --</option>
+                                @foreach (var company in Model.Companies)
+                                {
+                                    <option value="@company.Id">@company.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Input.CompanyId" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.ClientEmail" class="form-label"></label>
-                            <input asp-for="Input.ClientEmail" class="form-control" placeholder="Enter client email..." />
+                            <label for="Input.ClientEmail" class="form-label">Client Email</label>
+                            <input name="Input.ClientEmail" type="email" class="form-control" placeholder="Enter client email..." />
                             <span asp-validation-for="Input.ClientEmail" class="text-danger"></span>
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.ClientPhone" class="form-label"></label>
-                            <input asp-for="Input.ClientPhone" class="form-control" placeholder="Enter client phone..." />
+                            <label for="Input.ClientPhone" class="form-label">Client Phone</label>
+                            <input name="Input.ClientPhone" class="form-control" placeholder="Enter client phone..." />
                             <span asp-validation-for="Input.ClientPhone" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.TaxType" class="form-label"></label>
-                            <select asp-for="Input.TaxType" class="form-select">
+                            <label for="Input.TaxType" class="form-label">Tax Type</label>
+                            <select name="Input.TaxType" class="form-select">
                                 <option value="1099">1099</option>
                                 <option value="W2">W2</option>
                                 <option value="Corp-to-Corp">Corp-to-Corp</option>
@@ -183,44 +197,44 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label asp-for="Input.ClientAddress" class="form-label"></label>
-                        <textarea asp-for="Input.ClientAddress" class="form-control" rows="2" placeholder="Enter client address..."></textarea>
+                        <label for="Input.ClientAddress" class="form-label">Client Address</label>
+                        <textarea name="Input.ClientAddress" class="form-control" rows="2" placeholder="Enter client address..."></textarea>
                         <span asp-validation-for="Input.ClientAddress" class="text-danger"></span>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label asp-for="Input.Budget" class="form-label"></label>
+                            <label for="Input.Budget" class="form-label">Budget</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input asp-for="Input.Budget" class="form-control" step="0.01" min="0.01" />
+                                <input name="Input.Budget" type="number" step="0.01" min="0.01" class="form-control" />
                             </div>
                             <span asp-validation-for="Input.Budget" class="text-danger"></span>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label asp-for="Input.HourlyRate" class="form-label"></label>
+                            <label for="Input.HourlyRate" class="form-label">Hourly Rate</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input asp-for="Input.HourlyRate" class="form-control" step="0.01" min="0.01" />
+                                <input name="Input.HourlyRate" type="number" step="0.01" min="0.01" class="form-control" />
                             </div>
                             <span asp-validation-for="Input.HourlyRate" class="text-danger"></span>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label asp-for="Input.StartDate" class="form-label"></label>
-                            <input asp-for="Input.StartDate" class="form-control" />
+                            <label for="Input.StartDate" class="form-label">Start Date</label>
+                            <input name="Input.StartDate" type="date" class="form-control" />
                             <span asp-validation-for="Input.StartDate" class="text-danger"></span>
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.EndDate" class="form-label"></label>
-                            <input asp-for="Input.EndDate" class="form-control" />
+                            <label for="Input.EndDate" class="form-label">End Date</label>
+                            <input name="Input.EndDate" type="date" class="form-control" />
                             <span asp-validation-for="Input.EndDate" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Input.ContractFile" class="form-label"></label>
-                            <input asp-for="Input.ContractFile" class="form-control" type="file" accept=".pdf,.doc,.docx" />
+                            <label for="Input.ContractFile" class="form-label">Contract File</label>
+                            <input name="Input.ContractFile" class="form-control" type="file" accept=".pdf,.doc,.docx" />
                             <div class="form-text">Upload contract document (PDF, DOC, DOCX)</div>
                             <span asp-validation-for="Input.ContractFile" class="text-danger"></span>
                         </div>
@@ -228,7 +242,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" @(Model.HasCompanies ? "" : "disabled")>
                         <i class="fas fa-save me-2"></i>
                         Create Project
                     </button>
@@ -239,5 +253,5 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    @* Validation scripts removed to prevent client-side validation interference *@
 }
