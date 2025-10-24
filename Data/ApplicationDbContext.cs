@@ -73,6 +73,7 @@ namespace CadenceAccounting.Data
                 entity.Property(e => e.Hours).HasColumnType("decimal(5,2)");
                 entity.Property(e => e.Rate).HasColumnType("decimal(10,2)");
                 entity.Property(e => e.Amount).HasColumnType("decimal(15,2)");
+                entity.Property(e => e.IsInvoiced).HasDefaultValue(false);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
                 
@@ -94,6 +95,7 @@ namespace CadenceAccounting.Data
                 entity.HasIndex(e => e.ProjectId);
                 entity.HasIndex(e => e.Date);
                 entity.Property(e => e.Amount).HasColumnType("decimal(15,2)");
+                entity.Property(e => e.IsInvoiced).HasDefaultValue(false);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
                 

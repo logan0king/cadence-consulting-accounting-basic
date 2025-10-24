@@ -206,6 +206,8 @@ namespace CadenceAccounting.Models
         
         public bool IsBillable { get; set; } = true;
         
+        public bool IsInvoiced { get; set; } = false;
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
@@ -246,6 +248,8 @@ namespace CadenceAccounting.Models
         public string? ReceiptFileName { get; set; }
         
         public bool IsBillable { get; set; } = true;
+        
+        public bool IsInvoiced { get; set; } = false;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         

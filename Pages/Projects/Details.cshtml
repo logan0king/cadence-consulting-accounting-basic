@@ -32,10 +32,10 @@
                                 <i class="fas fa-receipt me-2"></i>
                                 Add Expense
                             </button>
-                            <a href="/Invoices/Index" class="btn btn-outline-info">
+                            <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#createInvoiceModal">
                                 <i class="fas fa-file-invoice me-2"></i>
                                 Create Invoice
-                            </a>
+                            </button>
                         </div>
                 </div>
             </div>
@@ -153,6 +153,8 @@
                                             <th>Rate</th>
                                             <th>Amount</th>
                                             <th>Billable</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -173,6 +175,50 @@
                                                     {
                                                         <span class="badge bg-secondary">No</span>
                                                     }
+                                                </td>
+                                                <td>
+                                                    @if (entry.IsInvoiced)
+                                                    {
+                                                        <span class="badge bg-info">Invoiced</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning">Available</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        @if (!entry.IsInvoiced)
+                                                        {
+                                                            <button class="btn btn-outline-primary" 
+                                                                    data-bs-toggle="modal" 
+                                                                    data-bs-target="#addTimeEntryModal"
+                                                                    data-entry-id="@entry.Id"
+                                                                    data-entry-date="@entry.Date.ToString("yyyy-MM-dd")"
+                                                                    data-entry-hours="@entry.Hours"
+                                                                    data-entry-rate="@entry.Rate"
+                                                                    data-entry-description="@entry.Description"
+                                                                    data-entry-billable="@entry.IsBillable.ToString().ToLower()"
+                                                                    data-mode="edit"
+                                                                    title="Edit Time Entry">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <form method="post" action="?handler=DeleteTimeEntry" class="d-inline">
+                                                                <input type="hidden" name="TimeEntryId" value="@entry.Id" />
+                                                                <button type="submit" class="btn btn-outline-danger" 
+                                                                        onclick="return confirm('Are you sure you want to delete this time entry?')"
+                                                                        title="Delete Time Entry">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="btn btn-outline-secondary" disabled title="Cannot edit invoiced items">
+                                                                <i class="fas fa-lock"></i>
+                                                            </button>
+                                                        }
+                                                    </div>
                                                 </td>
                                             </tr>
                                         }
@@ -215,6 +261,8 @@
                                             <th>Category</th>
                                             <th>Amount</th>
                                             <th>Billable</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -234,6 +282,50 @@
                                                     {
                                                         <span class="badge bg-secondary">No</span>
                                                     }
+                                                </td>
+                                                <td>
+                                                    @if (expense.IsInvoiced)
+                                                    {
+                                                        <span class="badge bg-info">Invoiced</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning">Available</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        @if (!expense.IsInvoiced)
+                                                        {
+                                                            <button class="btn btn-outline-primary" 
+                                                                    data-bs-toggle="modal" 
+                                                                    data-bs-target="#addExpenseModal"
+                                                                    data-expense-id="@expense.Id"
+                                                                    data-expense-date="@expense.Date.ToString("yyyy-MM-dd")"
+                                                                    data-expense-description="@expense.Description"
+                                                                    data-expense-category="@expense.Category"
+                                                                    data-expense-amount="@expense.Amount"
+                                                                    data-expense-billable="@expense.IsBillable.ToString().ToLower()"
+                                                                    data-mode="edit"
+                                                                    title="Edit Expense">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <form method="post" action="?handler=DeleteExpense" class="d-inline">
+                                                                <input type="hidden" name="ExpenseId" value="@expense.Id" />
+                                                                <button type="submit" class="btn btn-outline-danger" 
+                                                                        onclick="return confirm('Are you sure you want to delete this expense?')"
+                                                                        title="Delete Expense">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="btn btn-outline-secondary" disabled title="Cannot edit invoiced items">
+                                                                <i class="fas fa-lock"></i>
+                                                            </button>
+                                                        }
+                                                    </div>
                                                 </td>
                                             </tr>
                                         }
@@ -278,6 +370,7 @@
                                             <th>Paid</th>
                                             <th>Balance</th>
                                             <th>Status</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -307,6 +400,31 @@
                                                     {
                                                         <span class="badge bg-warning">@invoice.Status</span>
                                                     }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-primary" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#createInvoiceModal"
+                                                                data-invoice-id="@invoice.Id"
+                                                                data-invoice-number="@invoice.InvoiceNumber"
+                                                                data-invoice-date="@invoice.InvoiceDate.ToString("yyyy-MM-dd")"
+                                                                data-invoice-due-date="@invoice.DueDate.ToString("yyyy-MM-dd")"
+                                                                data-invoice-notes="@invoice.Notes"
+                                                                data-invoice-status="@invoice.Status"
+                                                                data-mode="edit"
+                                                                title="Edit Invoice">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <form method="post" action="?handler=DeleteInvoice" class="d-inline">
+                                                            <input type="hidden" name="InvoiceId" value="@invoice.Id" />
+                                                            <button type="submit" class="btn btn-outline-danger" 
+                                                                    onclick="return confirm('Are you sure you want to delete this invoice?')"
+                                                                    title="Delete Invoice">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         }
@@ -340,15 +458,16 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
+                <h5 class="modal-title" id="timeEntryModalTitle">
                     <i class="fas fa-plus me-2"></i>
                     Add Time Entry
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="?handler=AddTimeEntry">
+            <form method="post" id="timeEntryForm">
                 <div class="modal-body">
                     <input type="hidden" name="ProjectId" id="modalProjectId" />
+                    <input type="hidden" name="TimeEntryId" id="modalTimeEntryId" />
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -397,9 +516,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" id="timeEntrySubmitBtn">
                         <i class="fas fa-save me-2"></i>
-                        Save Time Entry
+                        <span id="timeEntrySubmitText">Save Time Entry</span>
                     </button>
                 </div>
             </form>
@@ -412,15 +531,16 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
+                <h5 class="modal-title" id="expenseModalTitle">
                     <i class="fas fa-plus me-2"></i>
                     Add Expense
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="?handler=AddExpense" enctype="multipart/form-data">
+            <form method="post" action="?handler=AddExpense" enctype="multipart/form-data" id="expenseForm">
                 <div class="modal-body">
                     <input type="hidden" name="ProjectId" id="modalExpenseProjectId" />
+                    <input type="hidden" name="ExpenseId" id="modalExpenseId" />
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -474,7 +594,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" id="expenseSubmitText">
                         <i class="fas fa-save me-2"></i>
                         Save Expense
                     </button>
@@ -483,6 +603,153 @@
         </div>
     </div>
 </div>
+
+<!-- Create Invoice Modal -->
+<div class="modal fade" id="createInvoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="invoiceModalTitle">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    Create Invoice
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="?handler=CreateInvoice" id="invoiceForm">
+                <div class="modal-body">
+                    <input type="hidden" name="ProjectId" id="modalInvoiceProjectId" />
+                    <input type="hidden" name="InvoiceId" id="modalInvoiceId" />
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="ProjectName" class="form-label">Project</label>
+                            <input type="text" class="form-control" id="InvoiceProjectName" readonly />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="ClientName" class="form-label">Client</label>
+                            <input type="text" class="form-control" id="InvoiceClientName" readonly />
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="invoiceNumberRow" style="display: none;">
+                        <div class="col-md-6 mb-3">
+                            <label for="InvoiceNumber" class="form-label">Invoice Number</label>
+                            <input name="InvoiceNumber" type="text" class="form-control" id="modalInvoiceNumber" readonly />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="Status" class="form-label">Status</label>
+                            <select name="Status" class="form-select" id="modalInvoiceStatus">
+                                <option value="Draft">Draft</option>
+                                <option value="Sent">Sent</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Overdue">Overdue</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="InvoiceDate" class="form-label">Invoice Date</label>
+                            <input name="InvoiceDate" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="DueDate" class="form-label">Due Date</label>
+                            <input name="DueDate" type="date" class="form-control" value="@DateTime.Today.AddDays(30).ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Project Budget</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" class="form-control" id="ProjectBudget" readonly />
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Amount to Invoice</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" class="form-control" id="InvoiceAmount" readonly />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Notes" class="form-label">Notes</label>
+                        <textarea name="Notes" class="form-control" rows="3" placeholder="Additional notes for the invoice..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-list me-2"></i>Select Items to Include in Invoice</h6>
+                        <p class="text-muted">Choose which time entries and expenses to include in this invoice.</p>
+                        
+                        <!-- Time Entries Section -->
+                        <div class="mb-4">
+                            <h6 class="text-primary">
+                                <i class="fas fa-clock me-2"></i>Time Entries
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="selectAllTimeEntries">Select All</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="deselectAllTimeEntries">Deselect All</button>
+                            </h6>
+                            <div id="timeEntriesList" class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                <small class="text-muted">Loading time entries...</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Expenses Section -->
+                        <div class="mb-4">
+                            <h6 class="text-success">
+                                <i class="fas fa-receipt me-2"></i>Expenses
+                                <button type="button" class="btn btn-sm btn-outline-success ms-2" id="selectAllExpenses">Select All</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="deselectAllExpenses">Deselect All</button>
+                            </h6>
+                            <div id="expensesList" class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                <small class="text-muted">Loading expenses...</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Summary -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-calculator me-2"></i>Invoice Summary</h6>
+                            <div id="invoiceSummary">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Selected Time Entries:</strong> <span id="selectedTimeCount">0</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Selected Expenses:</strong> <span id="selectedExpenseCount">0</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <strong>Time Total:</strong> $<span id="selectedTimeTotal">0.00</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Expense Total:</strong> $<span id="selectedExpenseTotal">0.00</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <strong>Invoice Total:</strong> $<span id="invoiceTotal">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="invoiceSubmitText">
+                        <i class="fas fa-save me-2"></i>
+                        Create Invoice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 @section Scripts {
     <script>
@@ -495,19 +762,62 @@
             console.log('URL Path:', urlPath);
             console.log('Extracted Project ID:', projectId);
             
-            // Populate modal when it opens
-            $('#addTimeEntryModal').on('show.bs.modal', function () {
+            // Populate add/edit time entry modal when it opens
+            $('#addTimeEntryModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var mode = button ? button.data('mode') : 'add';
                 var projectName = '@Model.Project?.Name';
                 var hourlyRate = '@Model.Project?.HourlyRate';
                 
-                console.log('Setting Project ID in form:', projectId);
-                $('#modalProjectId').val(projectId);
-                $('#ProjectName').val(projectName);
-                $('#modalRate').val(hourlyRate);
+                console.log('Time entry modal opening in mode:', mode);
                 
-                // Verify the value was set
+                if (mode === 'edit') {
+                    // Edit mode - populate with existing data
+                    var entryId = button.data('entry-id');
+                    var entryDate = button.data('entry-date');
+                    var entryHours = button.data('entry-hours');
+                    var entryRate = button.data('entry-rate');
+                    var entryDescription = button.data('entry-description');
+                    var entryBillable = button.data('entry-billable');
+                    
+                    console.log('Setting time entry data in edit form:', {
+                        entryId, entryDate, entryHours, entryRate, entryDescription, entryBillable
+                    });
+                    
+                    // Update modal title and button
+                    $('#timeEntryModalTitle').html('<i class="fas fa-edit me-2"></i>Edit Time Entry');
+                    $('#timeEntrySubmitText').text('Update Time Entry');
+                    $('#timeEntryForm').attr('action', '?handler=UpdateTimeEntry');
+                    
+                    // Populate form fields
+                    $('#modalTimeEntryId').val(entryId);
+                    $('#modalProjectId').val(projectId);
+                    $('#ProjectName').val(projectName);
+                    $('#addTimeEntryModal input[name="Date"]').val(entryDate);
+                    $('#addTimeEntryModal input[name="Hours"]').val(entryHours);
+                    $('#addTimeEntryModal input[name="Rate"]').val(entryRate);
+                    $('#addTimeEntryModal textarea[name="Description"]').val(entryDescription);
+                    $('#addTimeEntryModal input[name="IsBillable"]').prop('checked', entryBillable === 'true');
+                } else {
+                    // Add mode - clear form and set defaults
+                    $('#timeEntryModalTitle').html('<i class="fas fa-plus me-2"></i>Add Time Entry');
+                    $('#timeEntrySubmitText').text('Save Time Entry');
+                    $('#timeEntryForm').attr('action', '?handler=AddTimeEntry');
+                    
+                    // Clear form and set defaults
+                    $('#modalTimeEntryId').val('');
+                    $('#modalProjectId').val(projectId);
+                    $('#ProjectName').val(projectName);
+                    $('#addTimeEntryModal input[name="Date"]').val('@DateTime.Today.ToString("yyyy-MM-dd")');
+                    $('#addTimeEntryModal input[name="Hours"]').val('0');
+                    $('#addTimeEntryModal input[name="Rate"]').val(hourlyRate);
+                    $('#addTimeEntryModal textarea[name="Description"]').val('');
+                    $('#addTimeEntryModal input[name="IsBillable"]').prop('checked', true);
+                }
+                
+                // Verify the values were set
                 console.log('Project ID in form after setting:', $('#modalProjectId').val());
-                console.log('Form action will be:', $('#addTimeEntryModal form').attr('action'));
+                console.log('Form action will be:', $('#timeEntryForm').attr('action'));
                 
                 // Initialize amount calculation
                 calculateAmount();
@@ -540,16 +850,51 @@
             }
 
             // Populate expense modal when it opens
-            $('#addExpenseModal').on('show.bs.modal', function () {
+            $('#addExpenseModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var mode = button.data('mode') || 'add';
                 var projectName = '@Model.Project?.Name';
                 
-                console.log('Setting Project ID in expense form:', projectId);
-                $('#modalExpenseProjectId').val(projectId);
-                $('#ExpenseProjectName').val(projectName);
+                if (mode === 'edit') {
+                    // Edit mode - populate with existing expense data
+                    var expenseId = button.data('expense-id');
+                    var expenseDate = button.data('expense-date');
+                    var expenseDescription = button.data('expense-description');
+                    var expenseCategory = button.data('expense-category');
+                    var expenseAmount = button.data('expense-amount');
+                    var expenseBillable = button.data('expense-billable');
+                    
+                    $('#modalExpenseId').val(expenseId);
+                    $('#modalExpenseProjectId').val(projectId);
+                    $('#ExpenseProjectName').val(projectName);
+                    $('input[name="Date"]').val(expenseDate);
+                    $('textarea[name="Description"]').val(expenseDescription);
+                    $('input[name="Category"]').val(expenseCategory);
+                    $('input[name="Amount"]').val(expenseAmount);
+                    $('input[name="IsBillable"]').prop('checked', expenseBillable === 'true');
+                    
+                    $('#expenseModalTitle').html('<i class="fas fa-edit me-2"></i>Edit Expense');
+                    $('#expenseSubmitText').html('<i class="fas fa-save me-2"></i>Update Expense');
+                    $('#expenseForm').attr('action', '?handler=UpdateExpense');
+                } else {
+                    // Add mode - clear form and set defaults
+                    $('#modalExpenseId').val('');
+                    $('#modalExpenseProjectId').val(projectId);
+                    $('#ExpenseProjectName').val(projectName);
+                    $('input[name="Date"]').val('@DateTime.Today.ToString("yyyy-MM-dd")');
+                    $('textarea[name="Description"]').val('');
+                    $('input[name="Category"]').val('');
+                    $('input[name="Amount"]').val('');
+                    $('input[name="IsBillable"]').prop('checked', true);
+                    
+                    $('#expenseModalTitle').html('<i class="fas fa-plus me-2"></i>Add Expense');
+                    $('#expenseSubmitText').html('<i class="fas fa-save me-2"></i>Save Expense');
+                    $('#expenseForm').attr('action', '?handler=AddExpense');
+                }
                 
-                // Verify the value was set
-                console.log('Project ID in expense form after setting:', $('#modalExpenseProjectId').val());
-                console.log('Expense form action will be:', $('#addExpenseModal form').attr('action'));
+                console.log('Expense modal mode:', mode);
+                console.log('Project ID in expense form:', $('#modalExpenseProjectId').val());
+                console.log('Expense form action:', $('#expenseForm').attr('action'));
             });
 
             // Add expense form submit debugging
@@ -558,6 +903,222 @@
                 console.log('ProjectId value before submit:', $('#modalExpenseProjectId').val());
                 console.log('Expense form data:', $(this).serialize());
             });
+
+            // Populate invoice modal when it opens
+            $('#createInvoiceModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var mode = button.data('mode') || 'add';
+                var projectName = '@Model.Project?.Name';
+                var clientName = '@Model.Project?.ClientName';
+                var projectBudget = '@Model.Project?.Budget';
+                var totalAmount = '@Model.Project?.TotalAmount';
+                var timeEntriesCount = @Model.TimeEntries.Count();
+                var expensesCount = @Model.Expenses.Count();
+                
+                if (mode === 'edit') {
+                    // Edit mode - populate with existing invoice data
+                    var invoiceId = button.data('invoice-id');
+                    var invoiceNumber = button.data('invoice-number');
+                    var invoiceDate = button.data('invoice-date');
+                    var invoiceDueDate = button.data('invoice-due-date');
+                    var invoiceNotes = button.data('invoice-notes');
+                    var invoiceStatus = button.data('invoice-status');
+                    
+                    $('#modalInvoiceId').val(invoiceId);
+                    $('#modalInvoiceProjectId').val(projectId);
+                    $('#InvoiceProjectName').val(projectName);
+                    $('#InvoiceClientName').val(clientName);
+                    $('#modalInvoiceNumber').val(invoiceNumber);
+                    $('input[name="InvoiceDate"]').val(invoiceDate);
+                    $('input[name="DueDate"]').val(invoiceDueDate);
+                    $('textarea[name="Notes"]').val(invoiceNotes);
+                    $('#modalInvoiceStatus').val(invoiceStatus);
+                    
+                    // Show invoice number and status fields
+                    $('#invoiceNumberRow').show();
+                    
+                    $('#invoiceModalTitle').html('<i class="fas fa-edit me-2"></i>Edit Invoice');
+                    $('#invoiceSubmitText').html('<i class="fas fa-save me-2"></i>Update Invoice');
+                    $('#invoiceForm').attr('action', '?handler=UpdateInvoice');
+                } else {
+                    // Add mode - clear form and set defaults
+                    $('#modalInvoiceId').val('');
+                    $('#modalInvoiceProjectId').val(projectId);
+                    $('#InvoiceProjectName').val(projectName);
+                    $('#InvoiceClientName').val(clientName);
+                    $('input[name="InvoiceDate"]').val('@DateTime.Today.ToString("yyyy-MM-dd")');
+                    $('input[name="DueDate"]').val('@DateTime.Today.AddDays(30).ToString("yyyy-MM-dd")');
+                    $('textarea[name="Notes"]').val('');
+                    
+                    // Hide invoice number and status fields
+                    $('#invoiceNumberRow').hide();
+                    
+                    $('#invoiceModalTitle').html('<i class="fas fa-file-invoice me-2"></i>Create Invoice');
+                    $('#invoiceSubmitText').html('<i class="fas fa-save me-2"></i>Create Invoice');
+                    $('#invoiceForm').attr('action', '?handler=CreateInvoice');
+                }
+                
+                $('#ProjectBudget').val(parseFloat(projectBudget).toFixed(2));
+                
+                if (mode === 'add') {
+                    // Load selectable items for new invoice
+                    loadSelectableItems();
+                } else {
+                    // Hide selection for edit mode
+                    $('.mb-3:has(#timeEntriesList)').hide();
+                }
+                
+                console.log('Invoice modal mode:', mode);
+                console.log('Project ID in invoice form:', $('#modalInvoiceProjectId').val());
+                console.log('Invoice form action:', $('#invoiceForm').attr('action'));
+            });
+
+            // Add invoice form submit handler
+            $('#createInvoiceModal form').on('submit', function(e) {
+                console.log('Invoice form submitting...');
+                
+                // Collect selected time entries and expenses
+                var selectedTimeEntries = [];
+                $('.time-entry-checkbox:checked').each(function() {
+                    selectedTimeEntries.push($(this).val());
+                });
+                
+                var selectedExpenses = [];
+                $('.expense-checkbox:checked').each(function() {
+                    selectedExpenses.push($(this).val());
+                });
+                
+                // Add hidden inputs for selected items
+                if ($('#selectedTimeEntriesInput').length === 0) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: 'selectedTimeEntriesInput',
+                        name: 'SelectedTimeEntries',
+                        value: selectedTimeEntries.join(',')
+                    }).appendTo(this);
+                } else {
+                    $('#selectedTimeEntriesInput').val(selectedTimeEntries.join(','));
+                }
+                
+                if ($('#selectedExpensesInput').length === 0) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: 'selectedExpensesInput',
+                        name: 'SelectedExpenses',
+                        value: selectedExpenses.join(',')
+                    }).appendTo(this);
+                } else {
+                    $('#selectedExpensesInput').val(selectedExpenses.join(','));
+                }
+                
+                console.log('Selected time entries:', selectedTimeEntries);
+                console.log('Selected expenses:', selectedExpenses);
+                console.log('Invoice form data:', $(this).serialize());
+            });
+
+            // Load selectable items for invoice creation
+            function loadSelectableItems() {
+                // Load time entries
+                var timeEntriesHtml = '';
+                @foreach (var timeEntry in Model.TimeEntries.Where(t => t.IsBillable && !t.IsInvoiced))
+                {
+                    <text>
+                    timeEntriesHtml += `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input time-entry-checkbox" type="checkbox" 
+                                   value="@timeEntry.Id" id="timeEntry_@timeEntry.Id"
+                                   data-amount="@timeEntry.Amount" data-description="@timeEntry.Description">
+                            <label class="form-check-label" for="timeEntry_@timeEntry.Id">
+                                <strong>@timeEntry.Date.ToString("MM/dd/yyyy")</strong> - @timeEntry.Description
+                                <span class="text-muted">(@timeEntry.Hours hours × $@timeEntry.Rate = $@timeEntry.Amount)</span>
+                            </label>
+                        </div>
+                    `;
+                    </text>
+                }
+                if (timeEntriesHtml === '') {
+                    timeEntriesHtml = '<small class="text-muted">No billable time entries available for invoicing.</small>';
+                }
+                $('#timeEntriesList').html(timeEntriesHtml);
+
+                // Load expenses
+                var expensesHtml = '';
+                @foreach (var expense in Model.Expenses.Where(e => e.IsBillable && !e.IsInvoiced))
+                {
+                    <text>
+                    expensesHtml += `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input expense-checkbox" type="checkbox" 
+                                   value="@expense.Id" id="expense_@expense.Id"
+                                   data-amount="@expense.Amount" data-description="@expense.Description">
+                            <label class="form-check-label" for="expense_@expense.Id">
+                                <strong>@expense.Date.ToString("MM/dd/yyyy")</strong> - @expense.Description
+                                <span class="text-muted">(@expense.Category - $@expense.Amount)</span>
+                            </label>
+                        </div>
+                    `;
+                    </text>
+                }
+                if (expensesHtml === '') {
+                    expensesHtml = '<small class="text-muted">No billable expenses available for invoicing.</small>';
+                }
+                $('#expensesList').html(expensesHtml);
+
+                // Update summary
+                updateInvoiceSummary();
+            }
+
+            // Update invoice summary
+            function updateInvoiceSummary() {
+                var selectedTimeCount = $('.time-entry-checkbox:checked').length;
+                var selectedExpenseCount = $('.expense-checkbox:checked').length;
+                
+                var timeTotal = 0;
+                $('.time-entry-checkbox:checked').each(function() {
+                    timeTotal += parseFloat($(this).data('amount'));
+                });
+                
+                var expenseTotal = 0;
+                $('.expense-checkbox:checked').each(function() {
+                    expenseTotal += parseFloat($(this).data('amount'));
+                });
+                
+                var invoiceTotal = timeTotal + expenseTotal;
+                
+                $('#selectedTimeCount').text(selectedTimeCount);
+                $('#selectedExpenseCount').text(selectedExpenseCount);
+                $('#selectedTimeTotal').text(timeTotal.toFixed(2));
+                $('#selectedExpenseTotal').text(expenseTotal.toFixed(2));
+                $('#invoiceTotal').text(invoiceTotal.toFixed(2));
+                $('#InvoiceAmount').val(invoiceTotal.toFixed(2));
+            }
+
+            // Selection event handlers
+            $(document).on('change', '.time-entry-checkbox, .expense-checkbox', function() {
+                updateInvoiceSummary();
+            });
+
+            // Select all buttons
+            $('#selectAllTimeEntries').click(function() {
+                $('.time-entry-checkbox').prop('checked', true);
+                updateInvoiceSummary();
+            });
+
+            $('#deselectAllTimeEntries').click(function() {
+                $('.time-entry-checkbox').prop('checked', false);
+                updateInvoiceSummary();
+            });
+
+            $('#selectAllExpenses').click(function() {
+                $('.expense-checkbox').prop('checked', true);
+                updateInvoiceSummary();
+            });
+
+            $('#deselectAllExpenses').click(function() {
+                $('.expense-checkbox').prop('checked', false);
+                updateInvoiceSummary();
+            });
+
         });
     </script>
 }
