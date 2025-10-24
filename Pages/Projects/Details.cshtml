@@ -19,24 +19,24 @@
                         </h2>
                         <p class="text-muted mb-0">@Model.Project.ProjectNumber</p>
                     </div>
-                    <div class="btn-group">
-                        <a href="/Projects/Edit/@Model.Project.Id" class="btn btn-primary">
-                            <i class="fas fa-edit me-2"></i>
-                            Edit Project
-                        </a>
-                            <a href="/TimeTracking/Add/@Model.Project.Id" class="btn btn-outline-primary">
+                        <div class="btn-group">
+                            <a href="/Projects/Edit/@Model.Project.Id" class="btn btn-primary">
+                                <i class="fas fa-edit me-2"></i>
+                                Edit Project
+                            </a>
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addTimeEntryModal">
                                 <i class="fas fa-clock me-2"></i>
                                 Add Time
+                            </button>
+                            <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                                <i class="fas fa-receipt me-2"></i>
+                                Add Expense
+                            </button>
+                            <a href="/Invoices/Index" class="btn btn-outline-info">
+                                <i class="fas fa-file-invoice me-2"></i>
+                                Create Invoice
                             </a>
-                        <a href="/Expenses/Index" class="btn btn-outline-success">
-                            <i class="fas fa-receipt me-2"></i>
-                            Add Expense
-                        </a>
-                        <a href="/Invoices/Index" class="btn btn-outline-info">
-                            <i class="fas fa-file-invoice me-2"></i>
-                            Create Invoice
-                        </a>
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
@@ -335,3 +335,229 @@
         </div>
     }
 </div>
+<!-- Add Time Entry Modal -->
+<div class="modal fade" id="addTimeEntryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    Add Time Entry
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="?handler=AddTimeEntry">
+                <div class="modal-body">
+                    <input type="hidden" name="ProjectId" id="modalProjectId" />
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="ProjectName" class="form-label">Project</label>
+                            <input type="text" class="form-control" id="ProjectName" readonly />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="Date" class="form-label">Date</label>
+                            <input name="Date" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="Hours" class="form-label">Hours</label>
+                            <div class="input-group">
+                                <input name="Hours" type="number" class="form-control" step="0.1" min="0" max="24" value="0" />
+                                <span class="input-group-text">hrs</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="Rate" class="form-label">Rate</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input name="Rate" type="number" class="form-control" step="0.01" min="0.01" id="modalRate" />
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" class="form-control" id="amountDisplay" readonly />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Description" class="form-label">Description</label>
+                        <textarea name="Description" class="form-control" rows="3" placeholder="Describe the work performed..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input name="IsBillable" type="checkbox" class="form-check-input" checked />
+                        <label for="IsBillable" class="form-check-label">Billable</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        Save Time Entry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    Add Expense
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="?handler=AddExpense" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="ProjectId" id="modalExpenseProjectId" />
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="ProjectName" class="form-label">Project</label>
+                            <input type="text" class="form-control" id="ExpenseProjectName" readonly />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="Date" class="form-label">Date</label>
+                            <input name="Date" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="Description" class="form-label">Description</label>
+                        <textarea name="Description" class="form-control" rows="3" placeholder="Describe the expense..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="Category" class="form-label">Category</label>
+                            <input name="Category" class="form-control" list="categoryList" placeholder="Enter or select category..." />
+                            <datalist id="categoryList">
+                                <option value="Travel"></option>
+                                <option value="Meals"></option>
+                                <option value="Office Supplies"></option>
+                                <option value="Software"></option>
+                                <option value="Equipment"></option>
+                                <option value="Professional Services"></option>
+                                <option value="Other"></option>
+                            </datalist>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="Amount" class="form-label">Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input name="Amount" type="number" class="form-control" step="0.01" min="0.01" />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ReceiptFile" class="form-label">Receipt</label>
+                        <input name="ReceiptFile" class="form-control" type="file" accept="image/*,.pdf" />
+                        <div class="form-text">Upload receipt image (JPG, PNG, PDF)</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input name="IsBillable" type="checkbox" class="form-check-input" checked />
+                        <label for="IsBillable" class="form-check-label">Billable</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        Save Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            console.log('jQuery loaded and document ready');
+            
+            // Get project ID from URL
+            var urlPath = window.location.pathname;
+            var projectId = urlPath.split('/').pop();
+            console.log('URL Path:', urlPath);
+            console.log('Extracted Project ID:', projectId);
+            
+            // Populate modal when it opens
+            $('#addTimeEntryModal').on('show.bs.modal', function () {
+                var projectName = '@Model.Project?.Name';
+                var hourlyRate = '@Model.Project?.HourlyRate';
+                
+                console.log('Setting Project ID in form:', projectId);
+                $('#modalProjectId').val(projectId);
+                $('#ProjectName').val(projectName);
+                $('#modalRate').val(hourlyRate);
+                
+                // Verify the value was set
+                console.log('Project ID in form after setting:', $('#modalProjectId').val());
+                console.log('Form action will be:', $('#addTimeEntryModal form').attr('action'));
+                
+                // Initialize amount calculation
+                calculateAmount();
+            });
+            
+            // Add form submit debugging
+            $('#addTimeEntryModal form').on('submit', function(e) {
+                console.log('Form submitting...');
+                console.log('ProjectId value before submit:', $('#modalProjectId').val());
+                console.log('Form data:', $(this).serialize());
+            });
+            
+            // Add click handler to Save button
+            $('#addTimeEntryModal button[type="submit"]').on('click', function(e) {
+                console.log('Save button clicked!');
+                console.log('ProjectId value on click:', $('#modalProjectId').val());
+            });
+
+            // Calculate amount when hours or rate changes
+            $('input[name="Hours"], input[name="Rate"]').on('input', calculateAmount);
+            
+            // Calculate amount when focus leaves hours or rate fields
+            $('input[name="Hours"], input[name="Rate"]').on('blur', calculateAmount);
+
+            function calculateAmount() {
+                var hours = parseFloat($('input[name="Hours"]').val()) || 0;
+                var rate = parseFloat($('input[name="Rate"]').val()) || 0;
+                var amount = hours * rate;
+                $('#amountDisplay').val(amount.toFixed(2));
+            }
+
+            // Populate expense modal when it opens
+            $('#addExpenseModal').on('show.bs.modal', function () {
+                var projectName = '@Model.Project?.Name';
+                
+                console.log('Setting Project ID in expense form:', projectId);
+                $('#modalExpenseProjectId').val(projectId);
+                $('#ExpenseProjectName').val(projectName);
+                
+                // Verify the value was set
+                console.log('Project ID in expense form after setting:', $('#modalExpenseProjectId').val());
+                console.log('Expense form action will be:', $('#addExpenseModal form').attr('action'));
+            });
+
+            // Add expense form submit debugging
+            $('#addExpenseModal form').on('submit', function(e) {
+                console.log('Expense form submitting...');
+                console.log('ProjectId value before submit:', $('#modalExpenseProjectId').val());
+                console.log('Expense form data:', $(this).serialize());
+            });
+        });
+    </script>
+}

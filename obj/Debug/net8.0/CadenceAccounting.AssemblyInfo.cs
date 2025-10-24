@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CadenceAccounting")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0cec9ee60155a44ec9891f2fc06caf9bd9d1f55e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8c014ff58089ca42ee6c16c331ce05a900005f2d")]
 [assembly: System.Reflection.AssemblyProductAttribute("CadenceAccounting")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CadenceAccounting")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

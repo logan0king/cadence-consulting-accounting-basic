@@ -1,0 +1,68 @@
+---
+description: "Post-change workflow: build, verify, run (no demo data; framework-agnostic)"
+alwaysApply: true
+# If alwaysApply is unreliable in your Cursor version, comment it out and use globs:
+# globs:
+#   - "**/*"
+---
+
+## Agent checklist after any code changes
+
+**Goal:** Stop any running dev app, build to surface errors, fix them, and run the app using real dev data (never demo/mocks).
+
+### 0) Detect the stack and commands
+- Identify the build/run system from project files:
+  - NodeJS: **@package.json** → use defined scripts (`build`, `dev`, `start`).
+  - .NET: **@*.sln** / **@*.csproj** → `dotnet build`, `dotnet run`.
+  - Python: **@pyproject.toml** / **@requirements.txt** → project’s documented commands (e.g., `pytest`, `uvicorn`, or `python -m ...`).
+  - Java: **@pom.xml** → `mvn -q -DskipTests package`, run via the project’s documented command.
+  - Gradle: **@build.gradle** / **@gradlew** → `./gradlew build`.
+  - Go: **@go.mod** → `go build ./...`, run with `go run`/binary.
+  - Rust: **@Cargo.toml** → `cargo build`, run with `cargo run`.
+- Use what the repo defines. Do not invent framework-specific steps.
+
+### 1) If the dev app is running, stop it
+- Determine candidate port(s) in this order:
+  1. From **@.env.local** / **@.env** (e.g., `PORT`).
+  2. From run scripts if they specify a port flag.
+  3. Fallbacks: `3000`, `5000`, `8000`, `8080`.
+- macOS/Linux:
+  - ```bash
+    PORT=${PORT:-<detected-or-3000>}; lsof -ti :$PORT | xargs -r kill -9 || true
+    ```
+- Windows (PowerShell):
+  - ```powershell
+    $p = $env:PORT; if (-not $p) { $p = <detected-or-3000> }
+    $pids = (Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue).OwningProcess | Sort-Object -Unique
+    if ($pids) { $pids | ForEach-Object { Stop-Process -Id $_ -Force } }
+    ```
+
+### 2) Build to surface errors
+- Run the **canonical build** for the detected stack (see 0).
+- If monorepo tooling exists (e.g., workspace manager, build system), use its top-level build first.
+
+### 3) If build errors occur, fix them and re-run
+- Open the failing file(s), apply the **smallest correct fix**, re-run the same build until clean.
+- Do **not** start the app with a broken build.
+
+### 4) Start the app
+- Use the project’s defined start command (e.g., `npm run dev|start`, `dotnet run`, `python -m ...`, `java -jar ...`, `./gradlew bootRun`, `cargo run`).
+- Wait for “ready” logs; verify reachability at `http://localhost:<detected-port>`.
+
+### 5) Never use demo or mock data
+- Do **not** enable flags/envs such as: `DEMO`, `USE_MOCK_DATA`, `MOCK`, `SEED`, `FIXTURES`, `SAMPLE`.
+- Do **not** import from paths like `@/seed`, `@/fixtures`, `@/demo`, or sample JSONs labeled “demo”.
+- Use real dev data sources configured via **@.env.local** only. Never commit secrets.
+
+### 6) Report back succinctly
+- Summarize:
+  - Which port (if any) was freed and how.
+  - Exact build command(s) run and outcome.
+  - Key fixes applied (files changed).
+  - App command used and final URL.
+
+---
+### Implementation notes (for the Agent)
+- Detect and use the project’s **own** scripts and docs; don’t assume any front-end framework.
+- Keep edits minimal and explain each change in the summary.
+- If the port isn’t in env or scripts, probe common ports `3000`, `5000`, `8000`, `8080` before failing.

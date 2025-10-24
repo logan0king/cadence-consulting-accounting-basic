@@ -1,0 +1,26 @@
+# Build Quality Rule
+
+## Always fix build warnings and errors
+**Non-negotiable:** After any code changes, always run `dotnet build` and fix ALL warnings and errors before considering the task complete.
+
+### 1) Build after changes
+- Run `dotnet build --verbosity quiet` after any code modifications
+- If warnings or errors exist, fix them immediately
+- Never leave a build with warnings or errors
+
+### 2) Fix priority order
+- **Errors first**: Fix all compilation errors before warnings
+- **Warnings second**: Address all warnings systematically
+- **Zero tolerance**: The build must show "0 Warning(s), 0 Error(s)"
+
+### 3) Report back
+- Always confirm the final build status
+- If warnings/errors cannot be fixed, explain why and get approval
+
+### 4) Exception handling
+- If warnings are intentionally suppressed (like in project file), document why
+- If errors cannot be fixed due to external dependencies, explain and get guidance
+- Always attempt fixes before asking for help
+
+## Implementation
+This rule applies to ALL code changes, regardless of scope or complexity. The build must be clean before any task is considered complete.
