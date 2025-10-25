@@ -79,10 +79,88 @@ namespace CadenceAccounting.Services
             var invoice = await GetInvoiceByIdAsync(id);
             if (invoice == null) return false;
 
-            _context.Invoices.Remove(invoice);
-            await _context.SaveChangesAsync();
+            // Get all invoice items to find which time entries and expenses were invoiced
+            var invoiceItems = await _context.InvoiceItems
+                .Where(ii => ii.InvoiceId == id)
+                .ToListAsync();
 
-            _logger.LogInformation("Invoice {InvoiceNumber} deleted successfully", invoice.InvoiceNumber);
+            // Extract time entry and expense IDs from invoice items
+            var timeEntryIds = new List<Guid>();
+            var expenseIds = new List<Guid>();
+
+            foreach (var item in invoiceItems)
+            {
+                if (item.ItemType == "Time")
+                {
+                    // For time entries, we need to find the original time entry
+                    var timeEntries = await _context.TimeEntries
+                        .Where(te => te.ProjectId == invoice.ProjectId && te.IsInvoiced)
+                        .ToListAsync();
+                    
+                    // Find matching time entry by amount and description pattern
+                    var matchingTimeEntry = timeEntries.FirstOrDefault(te => 
+                        te.Amount == item.Amount && 
+                        item.Description.Contains(te.Description));
+                    
+                    if (matchingTimeEntry != null)
+                    {
+                        timeEntryIds.Add(matchingTimeEntry.Id);
+                    }
+                }
+                else if (item.ItemType == "Expense")
+                {
+                    // For expenses, we need to find the original expense
+                    var expenses = await _context.Expenses
+                        .Where(e => e.ProjectId == invoice.ProjectId && e.IsInvoiced)
+                        .ToListAsync();
+                    
+                    // Find matching expense by amount and description pattern
+                    var matchingExpense = expenses.FirstOrDefault(e => 
+                        e.Amount == item.Amount && 
+                        item.Description.Contains(e.Description));
+                    
+                    if (matchingExpense != null)
+                    {
+                        expenseIds.Add(matchingExpense.Id);
+                    }
+                }
+            }
+
+            // Mark time entries as not invoiced
+            if (timeEntryIds.Any())
+            {
+                var timeEntryIdsParam = string.Join(",", timeEntryIds.Select(id => $"'{id}'"));
+                var currentTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+                await _context.Database.ExecuteSqlRawAsync(
+                    $"UPDATE TimeEntries SET IsInvoiced = 0, UpdatedAt = '{currentTime}' WHERE Id IN ({timeEntryIdsParam})");
+            }
+
+            // Mark expenses as not invoiced
+            if (expenseIds.Any())
+            {
+                var expenseIdsParam = string.Join(",", expenseIds.Select(id => $"'{id}'"));
+                var currentTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+                await _context.Database.ExecuteSqlRawAsync(
+                    $"UPDATE Expenses SET IsInvoiced = 0, UpdatedAt = '{currentTime}' WHERE Id IN ({expenseIdsParam})");
+            }
+
+            // Delete invoice items first (to avoid foreign key constraint)
+            await _context.Database.ExecuteSqlRawAsync(
+                "DELETE FROM InvoiceItems WHERE InvoiceId = {0}",
+                id);
+
+            // Delete the invoice using raw SQL to avoid trigger conflicts
+            var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
+                "DELETE FROM Invoices WHERE Id = {0}",
+                id);
+
+            if (rowsAffected == 0)
+            {
+                return false;
+            }
+
+            _logger.LogInformation("Invoice {InvoiceNumber} deleted successfully, marked {TimeEntryCount} time entries and {ExpenseCount} expenses as not invoiced", 
+                invoice.InvoiceNumber, timeEntryIds.Count, expenseIds.Count);
             return true;
         }
 

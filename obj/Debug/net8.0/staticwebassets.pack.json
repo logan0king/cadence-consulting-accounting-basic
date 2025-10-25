@@ -1,8 +1,48 @@
 {
   "Files": [
     {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\report-designer.css",
+      "PackagePath": "staticwebassets\\css\\report-designer.css"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\site.css",
+      "PackagePath": "staticwebassets\\css\\site.css"
+    },
+    {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\themes\\journal.css",
       "PackagePath": "staticwebassets\\css\\themes\\journal.css"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\report-designer\\chart-manager.js",
+      "PackagePath": "staticwebassets\\js\\report-designer\\chart-manager.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\report-designer\\data-source-manager.js",
+      "PackagePath": "staticwebassets\\js\\report-designer\\data-source-manager.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\report-designer\\export-manager.js",
+      "PackagePath": "staticwebassets\\js\\report-designer\\export-manager.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\report-designer\\fabric-canvas-manager.js",
+      "PackagePath": "staticwebassets\\js\\report-designer\\fabric-canvas-manager.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\report-designer\\keyboard-manager.js",
+      "PackagePath": "staticwebassets\\js\\report-designer\\keyboard-manager.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\report-designer\\property-grid.js",
+      "PackagePath": "staticwebassets\\js\\report-designer\\property-grid.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\site.js",
+      "PackagePath": "staticwebassets\\js\\site.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\lib\\fabric.min.js",
+      "PackagePath": "staticwebassets\\lib\\fabric.min.js"
     },
     {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.CadenceAccounting.Microsoft.AspNetCore.StaticWebAssets.props",

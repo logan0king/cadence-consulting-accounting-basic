@@ -1,0 +1,262 @@
+@page
+@model CadenceAccounting.Pages.Reports.DocumentationModel
+@{
+    ViewData["Title"] = "Report Designer Documentation";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Report Designer Documentation</h1>
+                <div>
+                    <a href="/Reports/Designer" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Open Report Designer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Documentation -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book text-primary"></i> User Manual
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Complete user manual covering all features of the Report Designer. Perfect for new users and comprehensive reference for advanced users.
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>What's Included:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Getting Started Guide</li>
+                                <li><i class="fas fa-check text-success"></i> Component Library Reference</li>
+                                <li><i class="fas fa-check text-success"></i> Property Configuration</li>
+                                <li><i class="fas fa-check text-success"></i> Chart Types & Best Practices</li>
+                                <li><i class="fas fa-check text-success"></i> Export Options</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Advanced Topics:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Data Sources & Relationships</li>
+                                <li><i class="fas fa-check text-success"></i> Layout & Design Tools</li>
+                                <li><i class="fas fa-check text-success"></i> Keyboard Shortcuts</li>
+                                <li><i class="fas fa-check text-success"></i> Troubleshooting Guide</li>
+                                <li><i class="fas fa-check text-success"></i> Best Practices</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/Reports/ViewDocument?doc=manual" class="btn btn-primary">
+                            <i class="fas fa-book-open"></i> Open User Manual
+                        </a>
+                        <a href="/docs/ReportDesignerUserManual.md" target="_blank" class="btn btn-outline-secondary">
+                            <i class="fas fa-external-link-alt"></i> View Raw
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-lightning-bolt text-warning"></i> Quick Reference Card
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Essential shortcuts, workflows, and tips for experienced users. Keep this handy while working with the Report Designer.
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Quick Access:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-keyboard text-info"></i> Keyboard Shortcuts</li>
+                                <li><i class="fas fa-cogs text-info"></i> Component Categories</li>
+                                <li><i class="fas fa-route text-info"></i> Common Workflows</li>
+                                <li><i class="fas fa-file-export text-info"></i> Export Formats</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Quick Tips:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-tools text-info"></i> Troubleshooting</li>
+                                <li><i class="fas fa-magic text-info"></i> Tips & Tricks</li>
+                                <li><i class="fas fa-mouse-pointer text-info"></i> Quick Actions</li>
+                                <li><i class="fas fa-question-circle text-info"></i> Common Issues</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/Reports/ViewDocument?doc=quickref" class="btn btn-warning">
+                            <i class="fas fa-lightning-bolt"></i> Open Quick Reference
+                        </a>
+                        <a href="/docs/ReportDesignerQuickReference.md" target="_blank" class="btn btn-outline-secondary">
+                            <i class="fas fa-external-link-alt"></i> View Raw
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-video text-danger"></i> Video Tutorials
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Step-by-step video tutorials and scripts for creating professional training content.
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Tutorial Series:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-play-circle text-danger"></i> Episode 1: Introduction & First Report</li>
+                                <li><i class="fas fa-play-circle text-danger"></i> Episode 2: Data Sources & Relationships</li>
+                                <li><i class="fas fa-play-circle text-danger"></i> Episode 3: Charts & Visualizations</li>
+                                <li><i class="fas fa-play-circle text-danger"></i> Episode 4: Advanced Layout & Design</li>
+                                <li><i class="fas fa-play-circle text-danger"></i> Episode 5: Export & Distribution</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Additional Content:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-clock text-danger"></i> Short Tips Videos (2-3 min)</li>
+                                <li><i class="fas fa-graduation-cap text-danger"></i> Advanced Topics (10-15 min)</li>
+                                <li><i class="fas fa-briefcase text-danger"></i> Use Case Examples</li>
+                                <li><i class="fas fa-cogs text-danger"></i> Production Guidelines</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/Reports/ViewDocument?doc=tutorials" class="btn btn-danger">
+                            <i class="fas fa-video"></i> View Tutorial Scripts
+                        </a>
+                        <a href="/docs/ReportDesignerVideoTutorialScript.md" target="_blank" class="btn btn-outline-secondary">
+                            <i class="fas fa-external-link-alt"></i> View Raw
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-rocket text-success"></i> Get Started
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/Reports/Designer" class="btn btn-success">
+                            <i class="fas fa-edit"></i> Open Report Designer
+                        </a>
+                        <a href="/Reports/ViewDocument?doc=manual" class="btn btn-outline-primary">
+                            <i class="fas fa-book"></i> Read User Manual
+                        </a>
+                        <a href="/Reports/ViewDocument?doc=quickref" class="btn btn-outline-warning">
+                            <i class="fas fa-lightning-bolt"></i> Quick Reference
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-keyboard text-info"></i> Essential Shortcuts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted">Save</small><br>
+                            <kbd>Ctrl</kbd> + <kbd>S</kbd>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Undo</small><br>
+                            <kbd>Ctrl</kbd> + <kbd>Z</kbd>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Preview</small><br>
+                            <kbd>Ctrl</kbd> + <kbd>P</kbd>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Help</small><br>
+                            <kbd>F1</kbd>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Copy</small><br>
+                            <kbd>Ctrl</kbd> + <kbd>C</kbd>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Paste</small><br>
+                            <kbd>Ctrl</kbd> + <kbd>V</kbd>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/Reports/ViewDocument?doc=quickref" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-list"></i> All Shortcuts
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle text-secondary"></i> Need Help?
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Having trouble with the Report Designer? Check our troubleshooting guide or contact support.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="/Reports/ViewDocument?doc=manual" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-wrench"></i> Troubleshooting
+                        </a>
+                        <a href="/Reports/ViewDocument?doc=manual" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-star"></i> Best Practices
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle text-primary"></i> System Info
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 small">
+                        <div class="col-6">
+                            <strong>Version:</strong><br>
+                            Report Designer 1.0
+                        </div>
+                        <div class="col-6">
+                            <strong>Last Updated:</strong><br>
+                            @DateTime.Now.ToString("MMM dd, yyyy")
+                        </div>
+                        <div class="col-12">
+                            <strong>Features:</strong><br>
+                            Visual Design, Data Integration, Multiple Exports, Charts, Templates
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

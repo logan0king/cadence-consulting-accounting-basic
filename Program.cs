@@ -45,6 +45,8 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IReportDesignerService, ReportDesignerService>();
+builder.Services.AddScoped<IReportExportService, ReportExportService>();
 
 // Add authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -173,8 +175,8 @@ using (var scope = app.Services.CreateScope())
 
 try
 {
-    Log.Information("Starting Cadence Accounting Application");
-    app.Run();
+Log.Information("Starting Cadence Accounting Application");
+app.Run();
 }
 catch (Exception ex)
 {

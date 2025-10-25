@@ -459,4 +459,237 @@ namespace CadenceAccounting.Models
         
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
+    
+    // Report Designer Models
+    
+    public class ReportDefinition
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        [StringLength(200)]
+        public string Title { get; set; } = string.Empty;
+        
+        [StringLength(500)]
+        public string? Description { get; set; }
+        
+        [StringLength(100)]
+        public string ReportGroup { get; set; } = "General";
+        
+        [StringLength(100)]
+        public string? PrintDateUDF { get; set; }
+        
+        public string? AllowedUserGroups { get; set; } // JSON array
+        
+        public bool IsActive { get; set; } = true;
+        
+        public bool IsTemplate { get; set; } = false;
+        
+        [Required]
+        public Guid CreatedBy { get; set; }
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        
+        // Navigation properties
+        public virtual User CreatedByUser { get; set; } = null!;
+        public virtual ICollection<ReportDataSource> DataSources { get; set; } = new List<ReportDataSource>();
+        public virtual ICollection<ReportRelationship> Relationships { get; set; } = new List<ReportRelationship>();
+        public virtual ICollection<ReportComponent> Components { get; set; } = new List<ReportComponent>();
+        public virtual ICollection<ReportFilter> Filters { get; set; } = new List<ReportFilter>();
+        public virtual ICollection<ReportExecution> Executions { get; set; } = new List<ReportExecution>();
+    }
+    
+    public class ReportDataSource
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public Guid ReportId { get; set; }
+        
+        [Required]
+        [StringLength(100)]
+        public string SourceName { get; set; } = string.Empty; // Table/view name
+        
+        [Required]
+        [StringLength(20)]
+        public string SourceType { get; set; } = "table"; // 'table' or 'view'
+        
+        [StringLength(50)]
+        public string? Alias { get; set; }
+        
+        public int PositionX { get; set; } = 100;
+        
+        public int PositionY { get; set; } = 100;
+        
+        public bool IsSelected { get; set; } = true;
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        // Navigation properties
+        public virtual ReportDefinition Report { get; set; } = null!;
+        public virtual ICollection<ReportField> Fields { get; set; } = new List<ReportField>();
+    }
+    
+    public class ReportField
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public Guid ReportDataSourceId { get; set; }
+        
+        [Required]
+        [StringLength(100)]
+        public string FieldName { get; set; } = string.Empty;
+        
+        [StringLength(100)]
+        public string? DisplayName { get; set; }
+        
+        public bool IsSelected { get; set; } = false;
+        
+        public int SortOrder { get; set; } = 0;
+        
+        [StringLength(50)]
+        public string? DataType { get; set; }
+        
+        [StringLength(100)]
+        public string? FormatString { get; set; }
+        
+        public bool IsGroupBy { get; set; } = false;
+        
+        public bool IsSortBy { get; set; } = false;
+        
+        [StringLength(10)]
+        public string SortDirection { get; set; } = "ASC";
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        // Navigation properties
+        public virtual ReportDataSource DataSource { get; set; } = null!;
+    }
+    
+    public class ReportRelationship
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public Guid ReportId { get; set; }
+        
+        [Required]
+        public Guid FromDataSourceId { get; set; }
+        
+        [Required]
+        public Guid ToDataSourceId { get; set; }
+        
+        [Required]
+        [StringLength(100)]
+        public string FromField { get; set; } = string.Empty;
+        
+        [Required]
+        [StringLength(100)]
+        public string ToField { get; set; } = string.Empty;
+        
+        [StringLength(20)]
+        public string JoinType { get; set; } = "INNER";
+        
+        public bool IsActive { get; set; } = true;
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        // Navigation properties
+        public virtual ReportDefinition Report { get; set; } = null!;
+        public virtual ReportDataSource FromDataSource { get; set; } = null!;
+        public virtual ReportDataSource ToDataSource { get; set; } = null!;
+    }
+    
+    public class ReportComponent
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public Guid ReportId { get; set; }
+        
+        [Required]
+        [StringLength(50)]
+        public string ComponentType { get; set; } = string.Empty; // 'textbox', 'table', 'image', etc.
+        
+        public int PositionX { get; set; } = 0;
+        
+        public int PositionY { get; set; } = 0;
+        
+        public int Width { get; set; } = 100;
+        
+        public int Height { get; set; } = 50;
+        
+        public string? Properties { get; set; } // JSON properties
+        
+        public string? DataBinding { get; set; } // JSON data binding info
+        
+        public int ZIndex { get; set; } = 0;
+        
+        public bool IsVisible { get; set; } = true;
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        // Navigation properties
+        public virtual ReportDefinition Report { get; set; } = null!;
+    }
+    
+    public class ReportFilter
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public Guid ReportId { get; set; }
+        
+        [Required]
+        [StringLength(100)]
+        public string FieldName { get; set; } = string.Empty;
+        
+        [Required]
+        [StringLength(20)]
+        public string Operator { get; set; } = string.Empty; // =, <>, >, <, LIKE, etc.
+        
+        [StringLength(500)]
+        public string? FilterValue { get; set; }
+        
+        [StringLength(50)]
+        public string? DataType { get; set; }
+        
+        public bool IsActive { get; set; } = true;
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        // Navigation properties
+        public virtual ReportDefinition Report { get; set; } = null!;
+    }
+    
+    public class ReportExecution
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public Guid ReportId { get; set; }
+        
+        [Required]
+        public Guid ExecutedBy { get; set; }
+        
+        public DateTime ExecutionDate { get; set; } = DateTime.UtcNow;
+        
+        public string? Parameters { get; set; } // JSON of parameters used
+        
+        public int? ExecutionTimeMs { get; set; }
+        
+        public int? RecordCount { get; set; }
+        
+        [StringLength(20)]
+        public string Status { get; set; } = "Success";
+        
+        public string? ErrorMessage { get; set; }
+        
+        // Navigation properties
+        public virtual ReportDefinition Report { get; set; } = null!;
+        public virtual User ExecutedByUser { get; set; } = null!;
+    }
 }

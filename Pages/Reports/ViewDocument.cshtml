@@ -1,0 +1,154 @@
+@page
+@model CadenceAccounting.Pages.Reports.ViewDocumentModel
+@{
+    ViewData["Title"] = Model.DocumentTitle;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-book me-2"></i>@Model.DocumentTitle
+                </h1>
+                <div>
+                    <a href="/Reports/Documentation" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Documentation
+                    </a>
+                    <a href="/Reports/Designer" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Open Report Designer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div id="markdown-content" class="markdown-body">
+                        @Html.Raw(Model.HtmlContent)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
+    <style>
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: none;
+            margin: 0 auto;
+            padding: 45px;
+        }
+        
+        .markdown-body h1,
+        .markdown-body h2,
+        .markdown-body h3,
+        .markdown-body h4,
+        .markdown-body h5,
+        .markdown-body h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        
+        .markdown-body h1 {
+            font-size: 2em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+        
+        .markdown-body h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+        
+        .markdown-body code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: rgba(175, 184, 193, 0.2);
+            border-radius: 6px;
+        }
+        
+        .markdown-body pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+        }
+        
+        .markdown-body pre code {
+            background-color: transparent;
+            border: 0;
+            display: inline;
+            line-height: inherit;
+            margin: 0;
+            max-width: auto;
+            overflow: visible;
+            padding: 0;
+            word-wrap: normal;
+        }
+        
+        .markdown-body table {
+            border-spacing: 0;
+            border-collapse: collapse;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        
+        .markdown-body table th,
+        .markdown-body table td {
+            padding: 6px 13px;
+            border: 1px solid #d0d7de;
+        }
+        
+        .markdown-body table th {
+            font-weight: 600;
+            background-color: #f6f8fa;
+        }
+        
+        .markdown-body blockquote {
+            padding: 0 1em;
+            color: #656d76;
+            border-left: 0.25em solid #d0d7de;
+            margin: 0 0 16px 0;
+        }
+        
+        .markdown-body ul,
+        .markdown-body ol {
+            padding-left: 2em;
+        }
+        
+        .markdown-body li {
+            margin-bottom: 0.25em;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script>
+        // If content is markdown, convert it to HTML
+        @if (Model.IsMarkdown)
+        {
+            <text>
+            document.addEventListener('DOMContentLoaded', function() {
+                const markdownContent = @Html.Raw(Json.Serialize(Model.MarkdownContent));
+                const htmlContent = marked.parse(markdownContent);
+                document.getElementById('markdown-content').innerHTML = htmlContent;
+            });
+            </text>
+        }
+    </script>
+}

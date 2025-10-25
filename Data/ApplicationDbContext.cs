@@ -20,6 +20,15 @@ namespace CadenceAccounting.Data
         public DbSet<SystemSetting> SystemSettings { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<ProjectTemplate> ProjectTemplates { get; set; }
+        
+        // Report Designer entities
+        public DbSet<ReportDefinition> ReportDefinitions { get; set; }
+        public DbSet<ReportDataSource> ReportDataSources { get; set; }
+        public DbSet<ReportField> ReportFields { get; set; }
+        public DbSet<ReportRelationship> ReportRelationships { get; set; }
+        public DbSet<ReportComponent> ReportComponents { get; set; }
+        public DbSet<ReportFilter> ReportFilters { get; set; }
+        public DbSet<ReportExecution> ReportExecutions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -265,6 +274,130 @@ namespace CadenceAccounting.Data
                 CommonExpenses = "[\"Travel\", \"Meals\", \"Supplies\", \"Equipment\", \"Software\"]",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
+            });
+
+            // Configure Report Designer entities
+            ConfigureReportDesignerEntities(modelBuilder);
+        }
+
+        private void ConfigureReportDesignerEntities(ModelBuilder modelBuilder)
+        {
+            // Configure ReportDefinition entity
+            modelBuilder.Entity<ReportDefinition>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Title);
+                entity.HasIndex(e => e.ReportGroup);
+                entity.HasIndex(e => e.IsActive);
+                entity.HasIndex(e => e.CreatedBy);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasOne(d => d.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(d => d.CreatedBy)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configure ReportDataSource entity
+            modelBuilder.Entity<ReportDataSource>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ReportId);
+                entity.HasIndex(e => e.SourceName);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasOne(d => d.Report)
+                    .WithMany(p => p.DataSources)
+                    .HasForeignKey(d => d.ReportId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ReportField entity
+            modelBuilder.Entity<ReportField>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ReportDataSourceId);
+                entity.HasIndex(e => e.FieldName);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasOne(d => d.DataSource)
+                    .WithMany(p => p.Fields)
+                    .HasForeignKey(d => d.ReportDataSourceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ReportRelationship entity
+            modelBuilder.Entity<ReportRelationship>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ReportId);
+                entity.HasIndex(e => e.FromDataSourceId);
+                entity.HasIndex(e => e.ToDataSourceId);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasOne(d => d.Report)
+                    .WithMany(p => p.Relationships)
+                    .HasForeignKey(d => d.ReportId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(d => d.FromDataSource)
+                    .WithMany()
+                    .HasForeignKey(d => d.FromDataSourceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(d => d.ToDataSource)
+                    .WithMany()
+                    .HasForeignKey(d => d.ToDataSourceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ReportComponent entity
+            modelBuilder.Entity<ReportComponent>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ReportId);
+                entity.HasIndex(e => e.ComponentType);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasOne(d => d.Report)
+                    .WithMany(p => p.Components)
+                    .HasForeignKey(d => d.ReportId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ReportFilter entity
+            modelBuilder.Entity<ReportFilter>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ReportId);
+                entity.HasIndex(e => e.FieldName);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasOne(d => d.Report)
+                    .WithMany(p => p.Filters)
+                    .HasForeignKey(d => d.ReportId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ReportExecution entity
+            modelBuilder.Entity<ReportExecution>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.ReportId);
+                entity.HasIndex(e => e.ExecutedBy);
+                entity.HasIndex(e => e.ExecutionDate);
+                entity.Property(e => e.ExecutionDate).HasDefaultValueSql("GETUTCDATE()");
+                
+                entity.HasOne(d => d.Report)
+                    .WithMany(p => p.Executions)
+                    .HasForeignKey(d => d.ReportId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                entity.HasOne(d => d.ExecutedByUser)
+                    .WithMany()
+                    .HasForeignKey(d => d.ExecutedBy)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

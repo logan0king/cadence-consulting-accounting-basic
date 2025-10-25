@@ -1,0 +1,39 @@
+@page
+@model CadenceAccounting.Pages.Admin.SetupReportDesignerModel
+@{
+    ViewData["Title"] = "Setup Report Designer";
+}
+
+<div class="container">
+    <h2>Setup Report Designer</h2>
+    
+    @if (Model.Success)
+    {
+        <div class="alert alert-success">
+            <h4>Success!</h4>
+            <p>Report designer tables have been created successfully.</p>
+        </div>
+    }
+    
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            <h4>Error!</h4>
+            <p>@Model.ErrorMessage</p>
+        </div>
+    }
+    
+    <div class="card">
+        <div class="card-header">
+            <h5>Database Setup</h5>
+        </div>
+        <div class="card-body">
+            <p>This will create the report designer tables in the database.</p>
+            <form method="post">
+                <button type="submit" class="btn btn-primary" name="action" value="create">
+                    Create Report Designer Tables
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
