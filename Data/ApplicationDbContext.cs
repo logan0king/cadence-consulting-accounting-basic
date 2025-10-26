@@ -214,7 +214,7 @@ namespace CadenceAccounting.Data
         private void SeedData(ModelBuilder modelBuilder)
         {
             // Seed default admin user (Password: Admin123!)
-            var adminUserId = Guid.NewGuid();
+            var adminUserId = Guid.Parse("00000000-0000-0000-0000-000000000001"); // Fixed admin user ID
             modelBuilder.Entity<User>().HasData(new User
             {
                 Id = adminUserId,

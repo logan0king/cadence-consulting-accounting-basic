@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using CadenceAccounting.Services;
 using CadenceAccounting.Models;
+using Microsoft.EntityFrameworkCore;
+using CadenceAccounting.Data;
 
 namespace CadenceAccounting.Pages.Reports.Designer
 {
@@ -9,24 +11,90 @@ namespace CadenceAccounting.Pages.Reports.Designer
     {
         private readonly IReportDesignerService _reportDesignerService;
         private readonly IReportExportService _reportExportService;
+        private readonly ApplicationDbContext _context;
 
-        public IndexModel(IReportDesignerService reportDesignerService, IReportExportService reportExportService)
+        public IndexModel(IReportDesignerService reportDesignerService, IReportExportService reportExportService, ApplicationDbContext context)
         {
             _reportDesignerService = reportDesignerService;
             _reportExportService = reportExportService;
+            _context = context;
         }
 
         public List<ReportDefinition> Reports { get; set; } = new List<ReportDefinition>();
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(Guid? reportId = null)
         {
             Reports = await _reportDesignerService.GetReportsAsync();
+            
+            if (reportId.HasValue)
+            {
+                // Load the specific report for editing
+                var report = await _reportDesignerService.GetReportAsync(reportId.Value);
+                if (report != null)
+                {
+                    // Set the current report ID for the frontend
+                    ViewData["CurrentReportId"] = report.Id;
+                    ViewData["CurrentReportTitle"] = report.Title;
+                    ViewData["CurrentReportDescription"] = report.Description;
+                }
+            }
         }
 
         public async Task<IActionResult> OnGetDataSourcesAsync()
         {
             var dataSources = await _reportDesignerService.GetDataSourcesAsync();
             return new JsonResult(dataSources);
+        }
+
+        public async Task<IActionResult> OnGetGetReportAsync(Guid reportId)
+        {
+            try
+            {
+                var report = await _reportDesignerService.GetReportAsync(reportId);
+                if (report == null)
+                {
+                    return new JsonResult(new { success = false, error = "Report not found" });
+                }
+
+                // Convert components to a format the frontend can use
+                var componentsList = new List<object>();
+                if (report.Components != null)
+                {
+                    foreach (var c in report.Components)
+                    {
+                        componentsList.Add(new
+                        {
+                            id = c.Id,
+                            componentType = c.ComponentType,
+                            positionX = c.PositionX,
+                            positionY = c.PositionY,
+                            width = c.Width,
+                            height = c.Height,
+                            properties = !string.IsNullOrEmpty(c.Properties) ? 
+                                System.Text.Json.JsonSerializer.Deserialize<object>(c.Properties) : null,
+                            dataBinding = !string.IsNullOrEmpty(c.DataBinding) ? 
+                                System.Text.Json.JsonSerializer.Deserialize<object>(c.DataBinding) : null,
+                            zIndex = c.ZIndex,
+                            isVisible = c.IsVisible
+                        });
+                    }
+                }
+
+                return new JsonResult(new
+                {
+                    success = true,
+                    id = report.Id,
+                    title = report.Title,
+                    description = report.Description,
+                    reportGroup = report.ReportGroup,
+                    components = componentsList
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading report: {ex.Message}");
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
         }
 
         public async Task<IActionResult> OnGetFieldsAsync(string sourceName)
@@ -69,19 +137,40 @@ namespace CadenceAccounting.Pages.Reports.Designer
         }
 
 
-        public async Task<IActionResult> OnPostSaveReportAsync(Guid reportId, string reportData)
+        public async Task<IActionResult> OnPostSaveReportAsync(string reportId, string reportData)
         {
             try
             {
-                var report = await _reportDesignerService.GetReportAsync(reportId);
+                Console.WriteLine("SaveReport handler called");
+                Console.WriteLine($"Report ID parameter: {reportId}");
+                Console.WriteLine($"Report data parameter length: {reportData?.Length ?? 0}");
+                
+                if (string.IsNullOrEmpty(reportId) || !Guid.TryParse(reportId, out var parsedReportId))
+                {
+                    Console.WriteLine("Invalid report ID");
+                    return new JsonResult(new { success = false, error = "Invalid report ID" });
+                }
+                
+                Console.WriteLine($"Parsed Report ID: {parsedReportId}");
+                
+                if (string.IsNullOrEmpty(reportData))
+                {
+                    Console.WriteLine("Report data is missing");
+                    return new JsonResult(new { success = false, error = "Report data is required" });
+                }
+
+                var report = await _reportDesignerService.GetReportAsync(parsedReportId);
                 if (report == null)
                 {
+                    Console.WriteLine($"Report not found: {parsedReportId}");
                     return new JsonResult(new { success = false, error = "Report not found" });
                 }
 
+                Console.WriteLine($"Report found: {report.Title}");
+
                 // Parse the report data JSON
-                using var document = System.Text.Json.JsonDocument.Parse(reportData);
-                var reportDataObj = document.RootElement;
+                using var reportDataDoc = System.Text.Json.JsonDocument.Parse(reportData);
+                var reportDataObj = reportDataDoc.RootElement;
                 
                 // Update report metadata
                 if (reportDataObj.TryGetProperty("title", out var titleElement))
@@ -97,23 +186,26 @@ namespace CadenceAccounting.Pages.Reports.Designer
                 if (reportDataObj.TryGetProperty("components", out var componentsElement))
                 {
                     var components = componentsElement.EnumerateArray().ToList();
-                    await _reportDesignerService.SaveReportComponentsAsync(reportId, components);
+                    await _reportDesignerService.SaveReportComponentsAsync(parsedReportId, components);
                 }
 
                 // Save relationships if provided
                 if (reportDataObj.TryGetProperty("relationships", out var relationshipsElement))
                 {
                     var relationships = relationshipsElement.EnumerateArray().ToList();
-                    await _reportDesignerService.SaveReportRelationshipsAsync(reportId, relationships);
+                    await _reportDesignerService.SaveReportRelationshipsAsync(parsedReportId, relationships);
                 }
 
                 report.UpdatedAt = DateTime.UtcNow;
                 await _reportDesignerService.SaveReportAsync(report);
                 
+                Console.WriteLine("Report saved successfully");
                 return new JsonResult(new { success = true });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in SaveReport handler: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return new JsonResult(new { success = false, error = ex.Message });
             }
         }
@@ -249,9 +341,16 @@ namespace CadenceAccounting.Pages.Reports.Designer
 
         private Guid GetCurrentUserId()
         {
-            // Get current user ID from authentication
-            // This is a placeholder - implement based on your auth system
-            return Guid.Parse("00000000-0000-0000-0000-000000000001"); // Admin user ID
+            // Get the admin user ID from the database
+            // For now, we'll get the first active user (which should be the admin)
+            var adminUser = _context.Users.FirstOrDefault(u => u.Username == "admin" && u.IsActive);
+            if (adminUser != null)
+            {
+                return adminUser.Id;
+            }
+            
+            // Fallback to a default admin user ID if not found
+            return Guid.Parse("00000000-0000-0000-0000-000000000001");
         }
     }
 }

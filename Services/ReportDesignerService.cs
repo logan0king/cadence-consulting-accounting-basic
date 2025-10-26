@@ -112,91 +112,131 @@ namespace CadenceAccounting.Services
 
         public async Task<ReportDefinition> SaveReportAsync(ReportDefinition report)
         {
-            if (report.Id == Guid.Empty)
+            try
             {
-                report.Id = Guid.NewGuid();
-                report.CreatedAt = DateTime.UtcNow;
-                _context.ReportDefinitions.Add(report);
-            }
-            else
-            {
-                report.UpdatedAt = DateTime.UtcNow;
-                _context.ReportDefinitions.Update(report);
-            }
+                // Check if this is a new report by looking for existing record
+                var existingReport = await _context.ReportDefinitions.FindAsync(report.Id);
+                
+                if (existingReport == null)
+                {
+                    // This is a new report
+                    report.Id = Guid.NewGuid();
+                    report.CreatedAt = DateTime.UtcNow;
+                    report.UpdatedAt = DateTime.UtcNow;
+                    _context.ReportDefinitions.Add(report);
+                }
+                else
+                {
+                    // This is an existing report - update it
+                    existingReport.Title = report.Title;
+                    existingReport.Description = report.Description;
+                    existingReport.ReportGroup = report.ReportGroup;
+                    existingReport.PrintDateUDF = report.PrintDateUDF;
+                    existingReport.AllowedUserGroups = report.AllowedUserGroups;
+                    existingReport.IsActive = report.IsActive;
+                    existingReport.IsTemplate = report.IsTemplate;
+                    existingReport.UpdatedAt = DateTime.UtcNow;
+                }
 
-            await _context.SaveChangesAsync();
-            return report;
+                await _context.SaveChangesAsync();
+                return existingReport ?? report;
+            }
+            catch (Exception ex)
+            {
+                // Log the error and rethrow
+                Console.WriteLine($"Error saving report: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
         public async Task SaveReportComponentsAsync(Guid reportId, List<System.Text.Json.JsonElement> components)
         {
-            // Remove existing components for this report
-            var existingComponents = await _context.ReportComponents
-                .Where(c => c.ReportId == reportId)
-                .ToListAsync();
-            _context.ReportComponents.RemoveRange(existingComponents);
-
-            // Add new components
-            foreach (var componentJson in components)
+            try
             {
-                var component = new ReportComponent
+                // Remove existing components for this report
+                var existingComponents = await _context.ReportComponents
+                    .Where(c => c.ReportId == reportId)
+                    .ToListAsync();
+                _context.ReportComponents.RemoveRange(existingComponents);
+
+                // Add new components
+                foreach (var componentJson in components)
                 {
-                    Id = componentJson.TryGetProperty("id", out var idElement) ? 
-                         Guid.Parse(idElement.GetString()!) : Guid.NewGuid(),
-                    ReportId = reportId,
-                    ComponentType = componentJson.GetProperty("componentType").GetString()!,
-                    PositionX = componentJson.GetProperty("positionX").GetInt32(),
-                    PositionY = componentJson.GetProperty("positionY").GetInt32(),
-                    Width = componentJson.GetProperty("width").GetInt32(),
-                    Height = componentJson.GetProperty("height").GetInt32(),
-                    Properties = componentJson.TryGetProperty("properties", out var propsElement) ? 
-                                propsElement.GetString() : null,
-                    DataBinding = componentJson.TryGetProperty("dataBinding", out var bindingElement) ? 
-                                 bindingElement.GetString() : null,
-                    ZIndex = componentJson.TryGetProperty("zIndex", out var zIndexElement) ? 
-                            zIndexElement.GetInt32() : 0,
-                    IsVisible = componentJson.TryGetProperty("isVisible", out var visibleElement) ? 
-                               visibleElement.GetBoolean() : true,
-                    CreatedAt = DateTime.UtcNow
-                };
+                    var component = new ReportComponent
+                    {
+                        Id = componentJson.TryGetProperty("id", out var idElement) ? 
+                             Guid.Parse(idElement.GetString()!) : Guid.NewGuid(),
+                        ReportId = reportId,
+                        ComponentType = componentJson.GetProperty("componentType").GetString()!,
+                        PositionX = componentJson.GetProperty("positionX").GetInt32(),
+                        PositionY = componentJson.GetProperty("positionY").GetInt32(),
+                        Width = componentJson.GetProperty("width").GetInt32(),
+                        Height = componentJson.GetProperty("height").GetInt32(),
+                        Properties = componentJson.TryGetProperty("properties", out var propsElement) ? 
+                                    propsElement.GetString() : null,
+                        DataBinding = componentJson.TryGetProperty("dataBinding", out var bindingElement) ? 
+                                     bindingElement.GetString() : null,
+                        ZIndex = componentJson.TryGetProperty("zIndex", out var zIndexElement) ? 
+                                zIndexElement.GetInt32() : 0,
+                        IsVisible = componentJson.TryGetProperty("isVisible", out var visibleElement) ? 
+                                   visibleElement.GetBoolean() : true,
+                        CreatedAt = DateTime.UtcNow
+                    };
 
-                _context.ReportComponents.Add(component);
+                    _context.ReportComponents.Add(component);
+                }
+
+                await _context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving report components: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
         public async Task SaveReportRelationshipsAsync(Guid reportId, List<System.Text.Json.JsonElement> relationships)
         {
-            // Remove existing relationships for this report
-            var existingRelationships = await _context.ReportRelationships
-                .Where(r => r.ReportId == reportId)
-                .ToListAsync();
-            _context.ReportRelationships.RemoveRange(existingRelationships);
-
-            // Add new relationships
-            foreach (var relationshipJson in relationships)
+            try
             {
-                var relationship = new ReportRelationship
+                // Remove existing relationships for this report
+                var existingRelationships = await _context.ReportRelationships
+                    .Where(r => r.ReportId == reportId)
+                    .ToListAsync();
+                _context.ReportRelationships.RemoveRange(existingRelationships);
+
+                // Add new relationships
+                foreach (var relationshipJson in relationships)
                 {
-                    Id = relationshipJson.TryGetProperty("id", out var idElement) ? 
-                         Guid.Parse(idElement.GetString()!) : Guid.NewGuid(),
-                    ReportId = reportId,
-                    FromDataSourceId = Guid.Parse(relationshipJson.GetProperty("fromDataSourceId").GetString()!),
-                    ToDataSourceId = Guid.Parse(relationshipJson.GetProperty("toDataSourceId").GetString()!),
-                    FromField = relationshipJson.GetProperty("fromField").GetString()!,
-                    ToField = relationshipJson.GetProperty("toField").GetString()!,
-                    JoinType = relationshipJson.TryGetProperty("joinType", out var joinElement) ? 
-                              joinElement.GetString()! : "INNER",
-                    IsActive = relationshipJson.TryGetProperty("isActive", out var activeElement) ? 
-                              activeElement.GetBoolean() : true,
-                    CreatedAt = DateTime.UtcNow
-                };
+                    var relationship = new ReportRelationship
+                    {
+                        Id = relationshipJson.TryGetProperty("id", out var idElement) ? 
+                             Guid.Parse(idElement.GetString()!) : Guid.NewGuid(),
+                        ReportId = reportId,
+                        FromDataSourceId = Guid.Parse(relationshipJson.GetProperty("fromDataSourceId").GetString()!),
+                        ToDataSourceId = Guid.Parse(relationshipJson.GetProperty("toDataSourceId").GetString()!),
+                        FromField = relationshipJson.GetProperty("fromField").GetString()!,
+                        ToField = relationshipJson.GetProperty("toField").GetString()!,
+                        JoinType = relationshipJson.TryGetProperty("joinType", out var joinElement) ? 
+                                  joinElement.GetString()! : "INNER",
+                        IsActive = relationshipJson.TryGetProperty("isActive", out var activeElement) ? 
+                                  activeElement.GetBoolean() : true,
+                        CreatedAt = DateTime.UtcNow
+                    };
 
-                _context.ReportRelationships.Add(relationship);
+                    _context.ReportRelationships.Add(relationship);
+                }
+
+                await _context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving report relationships: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
         public async Task<ReportDefinition?> GetReportAsync(Guid id)

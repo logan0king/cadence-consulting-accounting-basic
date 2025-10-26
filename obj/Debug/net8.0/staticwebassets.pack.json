@@ -41,6 +41,14 @@
       "PackagePath": "staticwebassets\\js\\site.js"
     },
     {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\lib\\bootstrap\\bootstrap.bundle.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\bootstrap.bundle.min.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\lib\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\bootstrap.min.css"
+    },
+    {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\lib\\fabric.min.js",
       "PackagePath": "staticwebassets\\lib\\fabric.min.js"
     },

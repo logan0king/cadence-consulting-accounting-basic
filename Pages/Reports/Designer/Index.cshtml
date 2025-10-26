@@ -5,6 +5,8 @@
     Layout = "~/Pages/Shared/_Layout.cshtml";
 }
 
+@Html.AntiForgeryToken()
+
 <style>
     /* Report Designer Styles */
     .report-designer-container {
@@ -416,7 +418,10 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-chart-line me-2"></i>C.T.C. Report Designer</h2>
+                <div class="d-flex align-items-center">
+                    <h2><i class="fas fa-chart-line me-2"></i>C.T.C. Report Designer</h2>
+                    <span id="currentReportName" class="ms-3 text-muted" style="font-size: 1.1rem; font-weight: 500;"></span>
+                </div>
                 <div>
                     <a href="/Reports/Documentation" class="btn btn-outline-info me-2" title="View Documentation">
                         <i class="fas fa-book me-1"></i>Documentation
@@ -1155,7 +1160,8 @@
                             width: options.width || 200,
                             height: options.height || 50,
                             fontSize: options.fontSize || 14,
-                            fill: options.fill || '#000000'
+                            fill: options.fill || '#000000',
+                            textBaseline: 'alphabetic'
                         });
                         break;
                     case 'rectangle':
@@ -1180,7 +1186,8 @@
                             ...defaultOptions,
                             width: options.width || 300,
                             height: options.height || 100,
-                            fontSize: options.fontSize || 12
+                            fontSize: options.fontSize || 12,
+                            textBaseline: 'alphabetic'
                         });
                         break;
                     case 'chart':
@@ -1208,7 +1215,8 @@
                                 left: 2,
                                 top: -2,
                                 fontSize: 16,
-                                fill: '#000000'
+                                fill: '#000000',
+                                textBaseline: 'alphabetic'
                             });
                             component.addWithUpdate(checkmark);
                         }
@@ -1222,7 +1230,8 @@
                             fill: options.fill || '#000000',
                             fontStyle: options.fontStyle || 'normal',
                             fontWeight: options.fontWeight || 'normal',
-                            textDecoration: options.textDecoration || 'none'
+                            textDecoration: options.textDecoration || 'none',
+                            textBaseline: 'alphabetic'
                         });
                         break;
                     case 'picturebox':
@@ -1245,7 +1254,8 @@
                             fill: '#6c757d',
                             textAlign: 'center',
                             originX: 'center',
-                            originY: 'center'
+                            originY: 'center',
+                            textBaseline: 'alphabetic'
                         });
                         component.addWithUpdate(imageText);
                         break;
@@ -1311,7 +1321,8 @@
                             fill: '#000000',
                             textAlign: 'center',
                             originX: 'center',
-                            originY: 'center'
+                            originY: 'center',
+                            textBaseline: 'alphabetic'
                         });
                         component.addWithUpdate(barcodeText);
                         break;
@@ -1333,7 +1344,8 @@
                             fill: '#000000',
                             textAlign: 'center',
                             originX: 'center',
-                            originY: 'center'
+                            originY: 'center',
+                            textBaseline: 'alphabetic'
                         });
                         component.addWithUpdate(gaugeText);
                         break;
@@ -1356,7 +1368,8 @@
                             fill: '#28a745',
                             textAlign: 'center',
                             originX: 'center',
-                            originY: 'center'
+                            originY: 'center',
+                            textBaseline: 'alphabetic'
                         });
                         component.addWithUpdate(sparklineText);
                         break;
@@ -1366,7 +1379,8 @@
                             width: options.width || 300,
                             height: options.height || 120,
                             fontSize: options.fontSize || 12,
-                            fill: options.fill || '#000000'
+                            fill: options.fill || '#000000',
+                            textBaseline: 'alphabetic'
                         });
                         break;
                     case 'tableofcontents':
@@ -1375,7 +1389,8 @@
                             width: options.width || 200,
                             height: options.height || 100,
                             fontSize: options.fontSize || 12,
-                            fill: options.fill || '#000000'
+                            fill: options.fill || '#000000',
+                            textBaseline: 'alphabetic'
                         });
                         break;
                     case 'pageinfo':
@@ -1385,7 +1400,8 @@
                             height: options.height || 40,
                             fontSize: options.fontSize || 10,
                             fill: options.fill || '#6c757d',
-                            textAlign: options.textAlign || 'right'
+                            textAlign: options.textAlign || 'right',
+                            textBaseline: 'alphabetic'
                         });
                         break;
                     case 'crossbandline':
@@ -1411,7 +1427,8 @@
                         component = new fabric.Textbox('Component', {
                             ...defaultOptions,
                             width: 100,
-                            height: 50
+                            height: 50,
+                            textBaseline: 'alphabetic'
                         });
                 }
 
@@ -1422,8 +1439,8 @@
                 
                 // Update save button state when object is added
                 console.log('Object added to canvas, updating save button state');
-                if (typeof window.updateSaveButtonState === 'function') {
-                    window.updateSaveButtonState();
+                if (typeof updateSaveButtonState === 'function') {
+                    updateSaveButtonState();
                 } else {
                     console.log('updateSaveButtonState function not found');
                 }
@@ -1876,7 +1893,7 @@
                             
                             // Update save button state when objects are removed
                             if (typeof updateSaveButtonState === 'function') {
-                                window.updateSaveButtonState();
+                                updateSaveButtonState();
                             }
                         }
                     } else if (e.key === 'F1') {
@@ -1897,15 +1914,59 @@
             // Connect the canvas and property grid
             window.fabricCanvas.setPropertyGrid(window.propertyGrid);
             
+            // Initialize report name display
+            updateReportNameDisplay('');
+            
+            // Check if we're loading an existing report
+            @if (ViewData["CurrentReportId"] != null)
+            {
+                <text>
+                const reportId = '@ViewData["CurrentReportId"]';
+                const reportTitle = '@ViewData["CurrentReportTitle"]';
+                const reportDescription = '@ViewData["CurrentReportDescription"]';
+                
+                // Set the current report ID
+                window.currentReportId = reportId;
+                
+                // Update the UI fields
+                $('#reportTitle').val(reportTitle);
+                $('#reportDescription').val(reportDescription);
+                updateReportNameDisplay(reportTitle);
+                
+                // Load the report components
+                loadExistingReport(reportId);
+                </text>
+            }
+            
             // Add canvas event handlers for save button state
             window.fabricCanvas.canvas.on('object:added', function() {
                 console.log('Object added to canvas, updating save button state');
-                window.updateSaveButtonState();
+                window.hasUnsavedChanges = true;
+                updateSaveButtonState();
             });
             
             window.fabricCanvas.canvas.on('object:removed', function() {
                 console.log('Object removed from canvas, updating save button state');
-                window.updateSaveButtonState();
+                window.hasUnsavedChanges = true;
+                updateSaveButtonState();
+            });
+            
+            window.fabricCanvas.canvas.on('object:modified', function() {
+                console.log('Object modified on canvas, updating save button state');
+                window.hasUnsavedChanges = true;
+                updateSaveButtonState();
+            });
+            
+            // Track changes to report title and description
+            $('#reportTitle, #reportDescription').on('input', function() {
+                console.log('Report metadata changed, updating save button state');
+                window.hasUnsavedChanges = true;
+                updateSaveButtonState();
+                
+                // Update the report name display when title changes
+                if (this.id === 'reportTitle') {
+                    updateReportNameDisplay($(this).val());
+                }
             });
             
             // Initialize keyboard shortcuts and history
@@ -1914,33 +1975,12 @@
             // Load data sources
             dataSourceManager.loadDataSources();
 
-            // Define save button functions first
-            function enableSaveButton() {
-                console.log('Enabling save button');
-                $('#saveReportBtn').prop('disabled', false);
-                $('#saveReportBtn').removeClass('btn-outline-secondary').addClass('btn-primary');
-            }
 
-            function disableSaveButton() {
-                console.log('Disabling save button');
-                $('#saveReportBtn').prop('disabled', true);
-                $('#saveReportBtn').removeClass('btn-primary').addClass('btn-outline-secondary');
-            }
-
-            function updateSaveButtonState() {
-                const hasObjects = window.fabricCanvas && window.fabricCanvas.canvas.getObjects().length > 0;
-                console.log('UpdateSaveButtonState called. Has objects:', hasObjects, 'Object count:', window.fabricCanvas ? window.fabricCanvas.canvas.getObjects().length : 'Canvas not available');
-                if (hasObjects) {
-                    enableSaveButton();
-                } else {
-                    disableSaveButton();
-                }
-            }
 
             // Initial save button state
             console.log('Setting initial save button state');
             console.log('updateSaveButtonState function exists:', typeof updateSaveButtonState);
-            window.updateSaveButtonState();
+            updateSaveButtonState();
             
             // Test button enable/disable
             console.log('Testing save button - current state:', $('#saveReportBtn').prop('disabled'));
@@ -1977,7 +2017,8 @@
                                 fill: '#007bff',
                                 padding: 5,
                                 borderColor: '#cccccc',
-                                borderWidth: 1
+                                borderWidth: 1,
+                                textBaseline: 'alphabetic'
                             });
                             
                             // Add custom properties to identify this as a data field
@@ -1993,7 +2034,7 @@
                             // Update save button state when object is added
                             console.log('Field dropped on canvas, updating save button state');
                             if (typeof updateSaveButtonState === 'function') {
-                                window.updateSaveButtonState();
+                                updateSaveButtonState();
                             }
                         }
                     } catch (error) {
@@ -2014,7 +2055,7 @@
                 window.currentReportId = null;
                 
                 // Update save button state
-                window.updateSaveButtonState();
+                updateSaveButtonState();
                 
                 console.log('Creating new report:', { title, description, group });
             }
@@ -2024,7 +2065,7 @@
                 window.fabricCanvas.canvas.clear();
                 
                 // Update save button state
-                window.updateSaveButtonState();
+                updateSaveButtonState();
                 
                 // Load template based on type
                 switch (templateType) {
@@ -2200,7 +2241,7 @@
                 }
                 
                 // Update save button state after loading template
-                window.updateSaveButtonState();
+                updateSaveButtonState();
             }
 
             function loadInvoiceTemplate() {
@@ -2247,15 +2288,29 @@
 
             async function saveCurrentReport() {
                 try {
+                    console.log('Starting save process...');
+                    
                     const reportId = getCurrentReportId();
+                    console.log('Current report ID:', reportId);
+                    
                     if (!reportId) {
-                        // Create a new report if none exists
-                        const newReportId = await createNewReport();
+                        // Prompt user for report name if none exists
+                        const reportTitle = prompt('Please enter a name for your report:', 'My Report');
+                        if (!reportTitle || reportTitle.trim() === '') {
+                            alert('Report name is required to save.');
+                            return;
+                        }
+                        
+                        const reportDescription = prompt('Please enter a description for your report (optional):', '');
+                        
+                        console.log('No report ID found, creating new report with user input...');
+                        const newReportId = await createNewReportWithUserInput(reportTitle.trim(), reportDescription || '');
                         if (!newReportId) {
                             alert('Failed to create new report');
                             return;
                         }
                         window.currentReportId = newReportId;
+                        console.log('New report created with ID:', newReportId);
                     }
 
                     // Collect canvas data
@@ -2275,17 +2330,21 @@
                         relationships: extractRelationshipsFromCanvas()
                     };
 
+                    console.log('Report data to save:', reportData);
+                    console.log('Components count:', reportData.components.length);
+
                     showLoadingDialog('Saving report...');
 
                     const response = await fetch('?handler=SaveReport', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded',
                             'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                         },
-                        body: JSON.stringify({
+                        body: new URLSearchParams({
                             reportId: window.currentReportId,
-                            reportData: JSON.stringify(reportData)
+                            reportData: JSON.stringify(reportData),
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                         })
                     });
 
@@ -2296,11 +2355,17 @@
                         alert('Report saved successfully!');
                         // Update the report title in the UI
                         $('#reportTitle').val(reportData.title);
+                        updateReportNameDisplay(reportData.title); // Update the report name display
+                        // Clear unsaved changes flag and disable save button
+                        window.hasUnsavedChanges = false;
+                        disableSaveButton();
                     } else {
-                        alert('Error saving report: ' + result.error);
+                        console.error('Save failed:', result.error);
+                        alert('Failed to save report: ' + result.error);
                     }
                 } catch (error) {
                     hideLoadingDialog();
+                    console.error('Error saving report:', error);
                     alert('Error saving report: ' + error.message);
                 }
             }
@@ -2310,13 +2375,144 @@
                 return window.currentReportId || null;
             }
 
-            async function createNewReport() {
+            function generateGuid() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0,
+                        v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+
+            function updateReportNameDisplay(reportTitle) {
+                const reportNameElement = document.getElementById('currentReportName');
+                if (reportNameElement) {
+                    if (reportTitle && reportTitle.trim() !== '') {
+                        reportNameElement.textContent = `- ${reportTitle}`;
+                        reportNameElement.className = 'ms-3 text-primary';
+                    } else {
+                        reportNameElement.textContent = '- No Report Selected';
+                        reportNameElement.className = 'ms-3 text-muted';
+                    }
+                }
+            }
+
+            async function loadExistingReport(reportId) {
+                try {
+                    console.log('Loading existing report:', reportId);
+                    
+                    const response = await fetch(`?handler=GetReport&reportId=${reportId}`);
+                    if (!response.ok) {
+                        console.error('Failed to load report');
+                        return;
+                    }
+                    
+                    const report = await response.json();
+                    console.log('Report loaded:', report);
+                    
+                    // Clear the canvas first
+                    window.fabricCanvas.canvas.clear();
+                    
+                    // Load components onto the canvas
+                    if (report.components && report.components.length > 0) {
+                        report.components.forEach(component => {
+                            addComponentToCanvas(component);
+                        });
+                    }
+                    
+                    // Enable save button since we have a loaded report
+                    enableSaveButton();
+                    window.hasUnsavedChanges = false;
+                    
+                    console.log('Report loaded successfully');
+                } catch (error) {
+                    console.error('Error loading report:', error);
+                }
+            }
+
+            function addComponentToCanvas(component) {
+                try {
+                    let fabricObject;
+                    
+                    switch (component.componentType) {
+                        case 'textbox':
+                            fabricObject = new fabric.Textbox(component.properties?.text || 'Text', {
+                                left: component.positionX,
+                                top: component.positionY,
+                                width: component.width,
+                                height: component.height,
+                                fontSize: component.properties?.fontSize || 12,
+                                fontFamily: component.properties?.fontFamily || 'Arial',
+                                fill: component.properties?.fill || '#000000',
+                                backgroundColor: component.properties?.backgroundColor || 'transparent',
+                                borderColor: component.properties?.borderColor || 'transparent',
+                                borderWidth: component.properties?.borderWidth || 0,
+                                angle: component.properties?.rotation || 0,
+                                opacity: component.properties?.opacity || 1,
+                                visible: component.properties?.visible !== false
+                            });
+                            break;
+                        case 'label':
+                            fabricObject = new fabric.Text(component.properties?.text || 'Label', {
+                                left: component.positionX,
+                                top: component.positionY,
+                                fontSize: component.properties?.fontSize || 12,
+                                fontFamily: component.properties?.fontFamily || 'Arial',
+                                fill: component.properties?.fill || '#000000',
+                                angle: component.properties?.rotation || 0,
+                                opacity: component.properties?.opacity || 1,
+                                visible: component.properties?.visible !== false
+                            });
+                            break;
+                        case 'rectangle':
+                            fabricObject = new fabric.Rect({
+                                left: component.positionX,
+                                top: component.positionY,
+                                width: component.width,
+                                height: component.height,
+                                fill: component.properties?.fill || 'transparent',
+                                stroke: component.properties?.borderColor || 'transparent',
+                                strokeWidth: component.properties?.borderWidth || 0,
+                                angle: component.properties?.rotation || 0,
+                                opacity: component.properties?.opacity || 1,
+                                visible: component.properties?.visible !== false
+                            });
+                            break;
+                        default:
+                            console.warn('Unknown component type:', component.componentType);
+                            return;
+                    }
+                    
+                    // Set component properties
+                    fabricObject.set('id', component.id);
+                    fabricObject.set('componentType', component.componentType);
+                    fabricObject.set('zIndex', component.zIndex || 0);
+                    
+                    if (component.dataBinding) {
+                        fabricObject.set('dataBinding', component.dataBinding);
+                    }
+                    
+                    // Add to canvas
+                    window.fabricCanvas.canvas.add(fabricObject);
+                    window.fabricCanvas.canvas.renderAll();
+                    
+                } catch (error) {
+                    console.error('Error adding component to canvas:', error);
+                }
+            }
+
+            async function createNewReportWithUserInput(title, description) {
                 try {
                     const formData = new FormData();
-                    formData.append('title', 'New Report');
-                    formData.append('description', 'Created from Report Designer');
+                    formData.append('title', title);
+                    formData.append('description', description);
                     formData.append('reportGroup', 'General');
                     formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+                    
+                    // Debug: Log form data
+                    console.log('Form data being sent:');
+                    for (let [key, value] of formData.entries()) {
+                        console.log(key + ': ' + value);
+                    }
                     
                     const response = await fetch('?handler=CreateReport', {
                         method: 'POST',
@@ -2332,7 +2528,57 @@
 
                     const result = await response.json();
                     if (result.success) {
+                        // Update the UI fields with the created report data
+                        $('#reportTitle').val(title);
+                        $('#reportDescription').val(description);
+                        updateReportNameDisplay(title); // Update the report name display
                         enableSaveButton();
+                        window.hasUnsavedChanges = false; // Clear unsaved changes when new report is created
+                        return result.reportId;
+                    } else {
+                        console.error('Error creating report:', result.error);
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('Error creating report:', error);
+                    return null;
+                }
+            }
+
+            async function createNewReport() {
+                try {
+                    const formData = new FormData();
+                    formData.append('title', 'New Report');
+                    formData.append('description', 'Created from Report Designer');
+                    formData.append('reportGroup', 'General');
+                    formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+                    
+                    // Debug: Log form data
+                    console.log('Form data being sent:');
+                    for (let [key, value] of formData.entries()) {
+                        console.log(key + ': ' + value);
+                    }
+                    
+                    const response = await fetch('?handler=CreateReport', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('HTTP Error:', response.status, response.statusText);
+                        console.error('Error response:', errorText);
+                        return null;
+                    }
+
+                    const result = await response.json();
+                    if (result.success) {
+                        // Update the UI fields with the created report data
+                        $('#reportTitle').val('New Report');
+                        $('#reportDescription').val('Created from Report Designer');
+                        updateReportNameDisplay('New Report'); // Update the report name display
+                        enableSaveButton();
+                        window.hasUnsavedChanges = false; // Clear unsaved changes when new report is created
                         return result.reportId;
                     } else {
                         console.error('Error creating report:', result.error);
@@ -2351,7 +2597,7 @@
                 objects.forEach((obj, index) => {
                     if (obj.componentType) {
                         components.push({
-                            id: obj.id || `component_${index}`,
+                            id: obj.id || generateGuid(),
                             componentType: obj.componentType,
                             positionX: Math.round(obj.left),
                             positionY: Math.round(obj.top),
@@ -2512,6 +2758,9 @@
 
             function hideLoadingDialog() {
                 $('#loadingDialog').modal('hide');
+                // Force remove backdrop and modal
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
                 setTimeout(() => $('#loadingDialog').remove(), 300);
             }
 
@@ -3014,6 +3263,33 @@
             // Setup canvas drag and drop
             setupCanvasDragAndDrop();
         }); // End of $(document).ready
+
+        // Global functions
+        function enableSaveButton() {
+            console.log('Enabling save button');
+            $('#saveReportBtn').prop('disabled', false);
+            $('#saveReportBtn').removeClass('btn-outline-secondary').addClass('btn-primary');
+        }
+
+        function disableSaveButton() {
+            console.log('Disabling save button');
+            $('#saveReportBtn').prop('disabled', true);
+            $('#saveReportBtn').removeClass('btn-primary').addClass('btn-outline-secondary');
+        }
+
+        function updateSaveButtonState() {
+            const hasObjects = window.fabricCanvas && window.fabricCanvas.canvas.getObjects().length > 0;
+            const hasTitle = $('#reportTitle').val() && $('#reportTitle').val().trim() !== '';
+            const hasUnsavedChanges = window.hasUnsavedChanges || false;
+            
+            console.log('UpdateSaveButtonState called. Has objects:', hasObjects, 'Has title:', hasTitle, 'Has unsaved changes:', hasUnsavedChanges);
+            
+            if (hasObjects || hasTitle || hasUnsavedChanges) {
+                enableSaveButton();
+            } else {
+                disableSaveButton();
+            }
+        }
 
         // Export Manager
         window.exportManager = {
