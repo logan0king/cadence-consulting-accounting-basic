@@ -22,6 +22,7 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container.
+builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
 // Add anti-forgery token validation
@@ -47,6 +48,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IReportDesignerService, ReportDesignerService>();
 builder.Services.AddScoped<IReportExportService, ReportExportService>();
+builder.Services.AddScoped<IReportParameterService, ReportParameterService>();
 
 // Add authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -98,6 +100,7 @@ app.UseAntiforgery();
 
 app.UseSession();
 
+app.MapControllers();
 app.MapRazorPages();
 
 // Add a fallback route to test connection page

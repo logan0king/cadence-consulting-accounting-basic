@@ -4,6 +4,7 @@ using CadenceAccounting.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CadenceAccounting.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251026202313_AddReportParametersAndUpdateFilters")]
+    partial class AddReportParametersAndUpdateFilters
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -130,13 +133,13 @@ namespace CadenceAccounting.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("7441147f-9dea-4278-847e-a2560f66b044"),
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5199),
+                            Id = new Guid("095d622f-6c3b-4d35-a673-53aa9d57149b"),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6403),
                             Email = "info@cadence-consulting.com",
                             Name = "Cadence Consulting LLC",
                             Phone = "(312) 555-0123",
                             TaxId = "12-3456789",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5200)
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6405)
                         });
                 });
 
@@ -487,15 +490,15 @@ namespace CadenceAccounting.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("a8d423e1-ba59-4430-9af2-f1404e47cc36"),
+                            Id = new Guid("40a41c00-bf19-4549-91b7-f6b8914e6e7a"),
                             CommonExpenses = "[\"Travel\", \"Meals\", \"Supplies\", \"Equipment\", \"Software\"]",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(6207),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6748),
                             DefaultBudget = 50000.00m,
                             DefaultHourlyRate = 75.00m,
                             DefaultTaxType = "1099",
                             Description = "Template for state government contracts",
                             Name = "State Contract",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(6215)
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6749)
                         });
                 });
 
@@ -604,9 +607,6 @@ namespace CadenceAccounting.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AllowedUserGroups")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CanvasData")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -995,152 +995,152 @@ namespace CadenceAccounting.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("6c772e47-19ac-4e64-84ab-f13ffaaa346b"),
+                            Id = new Guid("18f9e43a-4edb-4c44-b81c-b51feb0cdc16"),
                             Category = "Invoice",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5351),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6474),
                             Description = "Invoice number format template",
                             Key = "InvoiceNumberFormat",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5352),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6474),
                             Value = "INV-{ProjectNumber}-{Year}-{SequentialNumber}"
                         },
                         new
                         {
-                            Id = new Guid("9cdb87da-d691-43fa-ae29-23c42fb2ea3f"),
+                            Id = new Guid("6dad7e54-5aa3-411c-bf30-074edd85a22e"),
                             Category = "Tax",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5379),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6480),
                             Description = "Default tax type for new projects",
                             Key = "DefaultTaxType",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5380),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6480),
                             Value = "1099"
                         },
                         new
                         {
-                            Id = new Guid("119246c6-6a3a-45f0-93f0-b6f48dfc6756"),
+                            Id = new Guid("00d4748e-63be-4745-85f7-69cf437d4b45"),
                             Category = "Tax",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5419),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6484),
                             Description = "Federal income tax withholding rate",
                             Key = "FederalWithholdingRate",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5420),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6484),
                             Value = "15.0"
                         },
                         new
                         {
-                            Id = new Guid("4920be27-84e6-4691-8d30-0514eb316ad0"),
+                            Id = new Guid("c728ad35-b9f7-42d1-a63d-8819c460c1bd"),
                             Category = "Tax",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5427),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6486),
                             Description = "Illinois state tax rate",
                             Key = "IllinoisStateTaxRate",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5428),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6486),
                             Value = "4.95"
                         },
                         new
                         {
-                            Id = new Guid("afb4e13b-fae3-4c78-82d8-5001dd3c6070"),
+                            Id = new Guid("8137cf18-38da-4a86-a693-23ed95327593"),
                             Category = "Tax",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5781),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6491),
                             Description = "Social Security tax rate",
                             Key = "SocialSecurityRate",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5782),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6491),
                             Value = "6.2"
                         },
                         new
                         {
-                            Id = new Guid("849fc624-d124-4c7e-979e-12e2ab2b81e9"),
+                            Id = new Guid("ace53a8c-2f5e-4f7a-b7dd-f7b5fb2898a5"),
                             Category = "Tax",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5785),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6493),
                             Description = "Medicare tax rate",
                             Key = "MedicareRate",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5786),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6494),
                             Value = "1.45"
                         },
                         new
                         {
-                            Id = new Guid("92c09f99-ca2b-4654-b9b3-9d28f879272f"),
+                            Id = new Guid("5640461d-6f7c-477e-aa92-56eca2a0417a"),
                             Category = "Project",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5797),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6500),
                             Description = "Default hourly rate for projects",
                             Key = "DefaultHourlyRate",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5798),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6500),
                             Value = "75.00"
                         },
                         new
                         {
-                            Id = new Guid("2719264e-8eea-4013-b345-c747081ba222"),
+                            Id = new Guid("7138ba49-c91a-4fb7-812a-bf6d7569db12"),
                             Category = "Company",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5801),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6502),
                             Description = "Company name for invoices",
                             Key = "CompanyName",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5801),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6503),
                             Value = "Cadence Consulting LLC"
                         },
                         new
                         {
-                            Id = new Guid("7a6377ce-7bf0-4ba3-bbf3-022cc2ff5fcc"),
+                            Id = new Guid("c1afad1f-800b-4f60-aa9e-fd1599fb8c11"),
                             Category = "Company",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5810),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6507),
                             Description = "Company email for invoices",
                             Key = "CompanyEmail",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5811),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6508),
                             Value = "info@cadence-consulting.com"
                         },
                         new
                         {
-                            Id = new Guid("3be9e849-8733-49a5-8637-6329a6e8aeeb"),
+                            Id = new Guid("1a9c840f-6805-454e-97d2-9117ffb94240"),
                             Category = "Email",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5814),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6510),
                             Description = "SMTP server for email",
                             Key = "SMTP_Server",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5814),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6510),
                             Value = "smtp.office365.com"
                         },
                         new
                         {
-                            Id = new Guid("dc7670b5-79d6-43df-ba08-094282bc951c"),
+                            Id = new Guid("e29043a6-8115-44d5-9969-6be6d9deb395"),
                             Category = "Email",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5822),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6512),
                             Description = "SMTP port for email",
                             Key = "SMTP_Port",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5891),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6512),
                             Value = "587"
                         },
                         new
                         {
-                            Id = new Guid("3abf1001-13f4-4b8c-b240-1726c491149b"),
+                            Id = new Guid("8273d4be-e7bf-4c67-b348-d468b424cfcf"),
                             Category = "Backup",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5895),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6514),
                             Description = "Backup frequency",
                             Key = "Backup_Frequency",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5895),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6528),
                             Value = "Daily"
                         },
                         new
                         {
-                            Id = new Guid("e474a56e-3b21-4a82-8a53-33807174c1c2"),
+                            Id = new Guid("1c664eda-d3e9-4f76-a1b4-d1327c21b1be"),
                             Category = "Backup",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5904),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6532),
                             Description = "Backup location",
                             Key = "Backup_Location",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5905),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6532),
                             Value = "C:\\Backups\\CadenceAccounting"
                         },
                         new
                         {
-                            Id = new Guid("0d859be8-7122-482f-9134-c844d0f52369"),
+                            Id = new Guid("6fc42372-aac8-41a0-a890-506ede8b0344"),
                             Category = "UI",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5926),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6534),
                             Description = "Default theme",
                             Key = "Theme",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5927),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6534),
                             Value = "Journal"
                         },
                         new
                         {
-                            Id = new Guid("da3bbd78-5f50-4874-a7e8-6f397d83208f"),
+                            Id = new Guid("536dd763-b7d1-4b3c-b24a-dfcf0eeb9788"),
                             Category = "Security",
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5934),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6541),
                             Description = "Session timeout in minutes",
                             Key = "SessionTimeout",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(5935),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(6542),
                             Value = "30"
                         });
                 });
@@ -1271,15 +1271,15 @@ namespace CadenceAccounting.Migrations
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(2114),
+                            CreatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(5437),
                             Email = "admin@cadence-consulting.com",
                             EmailVerified = true,
                             FirstName = "Admin",
                             IsActive = true,
                             LastName = "User",
-                            PasswordHash = "$2a$11$/k6hHg7HTI4uq.q/k0jNzuf6ommYP1ScSaCk63yrpqmuZIIy3bDhK",
+                            PasswordHash = "$2a$11$XWPgQyLI1DjSpXuGgaFCreYCYsIGpTiw7jj8dW47Ko6OxaM28QW.e",
                             Role = "Admin",
-                            UpdatedAt = new DateTime(2025, 10, 27, 15, 55, 59, 407, DateTimeKind.Utc).AddTicks(2140),
+                            UpdatedAt = new DateTime(2025, 10, 26, 20, 23, 12, 776, DateTimeKind.Utc).AddTicks(5443),
                             Username = "admin"
                         });
                 });

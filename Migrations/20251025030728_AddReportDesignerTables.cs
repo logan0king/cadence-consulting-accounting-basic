@@ -498,13 +498,13 @@ namespace CadenceAccounting.Migrations
                         column: x => x.FromDataSourceId,
                         principalTable: "ReportDataSources",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
                         name: "FK_ReportRelationships_ReportDataSources_ToDataSourceId",
                         column: x => x.ToDataSourceId,
                         principalTable: "ReportDataSources",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
                         name: "FK_ReportRelationships_ReportDefinitions_ReportId",
                         column: x => x.ReportId,

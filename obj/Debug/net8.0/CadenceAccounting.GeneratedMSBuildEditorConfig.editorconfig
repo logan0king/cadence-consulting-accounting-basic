@@ -82,6 +82,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVwb3J0c1xWaWV3RG9jdW1lbnQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/Cadence Consulting Accounting Basic/Pages/Reports/Viewer/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVwb3J0c1xWaWV3ZXJcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/Cadence Consulting Accounting Basic/Pages/Reports/Wizard/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVwb3J0c1xXaXphcmRcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/Cadence Consulting Accounting Basic/Pages/Setup/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2V0dXBcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

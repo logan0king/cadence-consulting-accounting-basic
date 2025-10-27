@@ -4,6 +4,9 @@ using CadenceAccounting.Services;
 using CadenceAccounting.Models;
 using Microsoft.EntityFrameworkCore;
 using CadenceAccounting.Data;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CadenceAccounting.Pages.Reports.Designer
 {
@@ -11,12 +14,14 @@ namespace CadenceAccounting.Pages.Reports.Designer
     {
         private readonly IReportDesignerService _reportDesignerService;
         private readonly IReportExportService _reportExportService;
+        private readonly IReportParameterService _reportParameterService;
         private readonly ApplicationDbContext _context;
 
-        public IndexModel(IReportDesignerService reportDesignerService, IReportExportService reportExportService, ApplicationDbContext context)
+        public IndexModel(IReportDesignerService reportDesignerService, IReportExportService reportExportService, IReportParameterService reportParameterService, ApplicationDbContext context)
         {
             _reportDesignerService = reportDesignerService;
             _reportExportService = reportExportService;
+            _reportParameterService = reportParameterService;
             _context = context;
         }
 
@@ -56,12 +61,15 @@ namespace CadenceAccounting.Pages.Reports.Designer
                     return new JsonResult(new { success = false, error = "Report not found" });
                 }
 
+                Console.WriteLine($"OnGetGetReportAsync: Found {report.Components?.Count ?? 0} components");
+
                 // Convert components to a format the frontend can use
                 var componentsList = new List<object>();
                 if (report.Components != null)
                 {
                     foreach (var c in report.Components)
                     {
+                        Console.WriteLine($"Component: Type={c.ComponentType}, X={c.PositionX}, Y={c.PositionY}");
                         componentsList.Add(new
                         {
                             id = c.Id,
@@ -80,6 +88,22 @@ namespace CadenceAccounting.Pages.Reports.Designer
                     }
                 }
 
+                Console.WriteLine($"Returning {componentsList.Count} components to frontend");
+
+                // Parse canvas data if available
+                object? canvasDataObj = null;
+                if (!string.IsNullOrEmpty(report.CanvasData))
+                {
+                    try
+                    {
+                        canvasDataObj = System.Text.Json.JsonSerializer.Deserialize<object>(report.CanvasData);
+                    }
+                    catch
+                    {
+                        // Ignore parsing errors, use null
+                    }
+                }
+
                 return new JsonResult(new
                 {
                     success = true,
@@ -87,7 +111,11 @@ namespace CadenceAccounting.Pages.Reports.Designer
                     title = report.Title,
                     description = report.Description,
                     reportGroup = report.ReportGroup,
-                    components = componentsList
+                    components = componentsList,
+                    metadata = new
+                    {
+                        canvasData = canvasDataObj
+                    }
                 });
             }
             catch (Exception ex)
@@ -101,6 +129,102 @@ namespace CadenceAccounting.Pages.Reports.Designer
         {
             var fields = await _reportDesignerService.GetFieldsAsync(sourceName);
             return new JsonResult(fields);
+        }
+
+        public async Task<IActionResult> OnGetExecuteQueryAsync(string sql)
+        {
+            try
+            {
+                // Execute SQL query and return results
+                using var connection = _context.Database.GetDbConnection();
+                await connection.OpenAsync();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = sql;
+
+                var results = new List<Dictionary<string, object>>();
+                using var reader = await command.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var row = new Dictionary<string, object>();
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        row[reader.GetName(i)] = reader.GetValue(i) ?? DBNull.Value;
+                    }
+                    results.Add(row);
+                }
+
+                return new JsonResult(new { success = true, data = results });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing query: {ex.Message}");
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnGetDatabaseSchemaAsync()
+        {
+            try
+            {
+                // Get database schema using ADO.NET
+                using var connection = _context.Database.GetDbConnection();
+                await connection.OpenAsync();
+
+                var tables = new List<Dictionary<string, object>>();
+                
+                // Get table names from INFORMATION_SCHEMA
+                using var tablesCommand = connection.CreateCommand();
+                tablesCommand.CommandText = @"
+                    SELECT TABLE_NAME 
+                    FROM INFORMATION_SCHEMA.TABLES 
+                    WHERE TABLE_TYPE = 'BASE TABLE' 
+                    ORDER BY TABLE_NAME";
+
+                using var reader = await tablesCommand.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var tableName = reader.GetString(0);
+                    
+                    // Get columns for this table
+                    using var columnsCommand = connection.CreateCommand();
+                    columnsCommand.CommandText = @"
+                        SELECT COLUMN_NAME, DATA_TYPE 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = @tableName 
+                        ORDER BY ORDINAL_POSITION";
+                    
+                    var tableParam = columnsCommand.CreateParameter();
+                    tableParam.ParameterName = "@tableName";
+                    tableParam.Value = tableName;
+                    columnsCommand.Parameters.Add(tableParam);
+                    
+                    var columns = new List<Dictionary<string, string>>();
+                    using var columnReader = await columnsCommand.ExecuteReaderAsync();
+                    while (await columnReader.ReadAsync())
+                    {
+                        columns.Add(new Dictionary<string, string>
+                        {
+                            { "name", columnReader.GetString(0) },
+                            { "type", columnReader.GetString(1) }
+                        });
+                    }
+                    
+                    tables.Add(new Dictionary<string, object>
+                    {
+                        { "name", tableName },
+                        { "columns", columns }
+                    });
+                }
+                
+                return new JsonResult(tables);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching database schema: {ex.Message}");
+                return new JsonResult(new { error = ex.Message });
+            }
         }
 
         public async Task<IActionResult> OnPostCreateReportAsync(string title, string description, string reportGroup)
@@ -180,6 +304,12 @@ namespace CadenceAccounting.Pages.Reports.Designer
                 if (reportDataObj.TryGetProperty("description", out var descElement))
                 {
                     report.Description = descElement.GetString() ?? report.Description;
+                }
+                
+                // Save canvas data if provided
+                if (reportDataObj.TryGetProperty("canvasData", out var canvasDataElement))
+                {
+                    report.CanvasData = canvasDataElement.GetRawText();
                 }
 
                 // Save components if provided
@@ -337,6 +467,236 @@ namespace CadenceAccounting.Pages.Reports.Designer
             {
                 return new JsonResult(new { success = false, error = ex.Message });
             }
+        }
+
+        [BindProperty]
+        public string? ComponentId { get; set; }
+
+        [BindProperty(Name = "dataBinding")]
+        public string? DataBinding { get; set; }
+
+        public async Task<IActionResult> OnPostSaveDataBindingAsync(string componentId, string? dataBinding = null)
+        {
+            try
+            {
+                Console.WriteLine($"SaveDataBinding called - ComponentId: {componentId}, DataBinding: {dataBinding}");
+                
+                if (string.IsNullOrEmpty(componentId) || !Guid.TryParse(componentId, out Guid componentGuid))
+                {
+                    return new JsonResult(new { success = false, error = "Invalid component ID" });
+                }
+
+                var component = await _context.ReportComponents.FindAsync(componentGuid);
+                if (component == null)
+                {
+                    return new JsonResult(new { success = false, error = "Component not found" });
+                }
+
+                if (dataBinding != null && dataBinding != "null" && !string.IsNullOrEmpty(dataBinding))
+                {
+                    component.DataBinding = dataBinding;
+                }
+                else
+                {
+                    component.DataBinding = null;
+                }
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine("Data binding saved successfully");
+                
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving data binding: {ex.Message}");
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        // Parameter handlers
+        public async Task<IActionResult> OnGetParametersAsync(Guid reportId)
+        {
+            try
+            {
+                var parameters = await _reportParameterService.GetParametersAsync(reportId);
+                return new JsonResult(parameters);
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnGetParameterAsync(Guid parameterId)
+        {
+            try
+            {
+                var parameter = await _reportParameterService.GetParameterAsync(parameterId);
+                return new JsonResult(parameter);
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnPostSaveParameterAsync([FromBody] ReportParameter parameter)
+        {
+            try
+            {
+                var savedParameter = await _reportParameterService.SaveParameterAsync(parameter);
+                return new JsonResult(new { success = true, parameter = savedParameter });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnPostDeleteParameterAsync(Guid parameterId)
+        {
+            try
+            {
+                await _reportParameterService.DeleteParameterAsync(parameterId);
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        // Filter handlers
+        public async Task<IActionResult> OnGetFiltersAsync(Guid reportId)
+        {
+            try
+            {
+                var filters = await _context.ReportFilters
+                    .Where(f => f.ReportId == reportId)
+                    .OrderBy(f => f.SortOrder)
+                    .ToListAsync();
+                return new JsonResult(filters);
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnGetFilterAsync(Guid filterId)
+        {
+            try
+            {
+                var filter = await _context.ReportFilters.FindAsync(filterId);
+                return new JsonResult(filter);
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnPostSaveFilterAsync([FromBody] ReportFilter filter)
+        {
+            try
+            {
+                if (filter.Id == Guid.Empty)
+                {
+                    filter.Id = Guid.NewGuid();
+                    filter.CreatedAt = DateTime.UtcNow;
+                    filter.UpdatedAt = DateTime.UtcNow;
+                    _context.ReportFilters.Add(filter);
+                }
+                else
+                {
+                    filter.UpdatedAt = DateTime.UtcNow;
+                    _context.ReportFilters.Update(filter);
+                }
+                await _context.SaveChangesAsync();
+                return new JsonResult(new { success = true, filter = filter });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnPostDeleteFilterAsync(Guid filterId)
+        {
+            try
+            {
+                var filter = await _context.ReportFilters.FindAsync(filterId);
+                if (filter != null)
+                {
+                    _context.ReportFilters.Remove(filter);
+                    await _context.SaveChangesAsync();
+                }
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> OnPostCreateFromWizardAsync([FromBody] WizardData data)
+        {
+            try
+            {
+                Console.WriteLine($"OnPostCreateFromWizardAsync called. Data: {System.Text.Json.JsonSerializer.Serialize(data)}");
+                
+                if (data == null)
+                {
+                    return new JsonResult(new { success = false, error = "No data provided" });
+                }
+
+                var userId = GetCurrentUserId();
+                Console.WriteLine($"Current user ID: {userId}");
+
+                var report = new ReportDefinition
+                {
+                    Id = Guid.NewGuid(),
+                    Title = data.Title,
+                    Description = data.Description ?? string.Empty,
+                    ReportGroup = data.Group ?? "General",
+                    CreatedBy = userId,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                await _context.ReportDefinitions.AddAsync(report);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"Report created successfully. ID: {report.Id}");
+                return new JsonResult(new { success = true, reportId = report.Id });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OnPostCreateFromWizardAsync: {ex.Message}\n{ex.StackTrace}");
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
+        public class WizardData
+        {
+            [JsonPropertyName("template")]
+            public string Template { get; set; } = string.Empty;
+            
+            [JsonPropertyName("dataSource")]
+            public string DataSource { get; set; } = string.Empty;
+            
+            [JsonPropertyName("fields")]
+            public List<string> Fields { get; set; } = new();
+            
+            [JsonPropertyName("title")]
+            public string Title { get; set; } = string.Empty;
+            
+            [JsonPropertyName("description")]
+            public string Description { get; set; } = string.Empty;
+            
+            [JsonPropertyName("group")]
+            public string Group { get; set; } = string.Empty;
         }
 
         private Guid GetCurrentUserId()

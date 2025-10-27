@@ -789,6 +789,7 @@
     </div>
 
     <!-- Right Sidebar with Data Sources and Properties -->
+    <div class="sidebar-resize-handle"></div>
     <div class="right-sidebar">
         <!-- Data Sources Panel (top half) -->
         <div class="data-sources-panel">
@@ -813,6 +814,15 @@
                     </button>
                     <button id="alphabeticalView">
                         <i class="fas fa-sort-alpha-down"></i> Alphabetical
+                    </button>
+                    <button id="dataBindingView" class="btn btn-sm btn-info ms-2" title="Data Binding">
+                        <i class="fas fa-database"></i> Bind Data
+                    </button>
+                    <button id="parametersView" class="btn btn-sm btn-warning ms-2" title="Parameters">
+                        <i class="fas fa-sliders-h"></i> Parameters
+                    </button>
+                    <button id="filtersView" class="btn btn-sm btn-success ms-2" title="Filters">
+                        <i class="fas fa-filter"></i> Filters
                     </button>
                 </div>
             </div>
@@ -857,16 +867,27 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/report-designer.css" />
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/ui-lightness/jquery-ui.css">
+    <link rel="stylesheet" href="~/lib/jquery-ui.css">
+    <link rel="stylesheet" href="~/css/excel-table.css">
 }
 
 @section Scripts {
     <script src="~/lib/fabric.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="~/lib/jquery-ui.min.js"></script>
+    <script src="~/js/excel-table.js"></script>
     <!-- External JavaScript files will be loaded inline below -->
     <script>
+        // Utility function to generate GUID - must be in global scope
+        function generateGuid() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
         // Core Classes
             class FabricCanvasManager {
                 constructor(canvasId) {
@@ -1159,82 +1180,20 @@
                             ...defaultOptions,
                             width: options.width || 200,
                             height: options.height || 50,
-                            fontSize: options.fontSize || 14,
-                            fill: options.fill || '#000000',
-                            textBaseline: 'alphabetic'
+                        fontSize: options.fontSize || 14,
+                        fill: options.fill || '#000000'
                         });
+                        component.set('tooltip', 'Text Box');
                         break;
-                    case 'rectangle':
-                        component = new fabric.Rect({
+                    case 'label':
+                        component = new fabric.Text(options.text || 'Label', {
                             ...defaultOptions,
-                            width: options.width || 200,
-                            height: options.height || 100,
-                            fill: options.fill || 'transparent',
-                            stroke: options.stroke || '#000000',
-                            strokeWidth: options.strokeWidth || 1
+                        fontSize: options.fontSize || 14,
+                        fill: options.fill || '#000000'
                         });
+                        component.set('tooltip', 'Label');
                         break;
-                    case 'line':
-                        component = new fabric.Line([0, 0, options.width || 200, 0], {
-                            ...defaultOptions,
-                            stroke: options.stroke || '#000000',
-                            strokeWidth: options.strokeWidth || 1
-                        });
-                        break;
-                    case 'table':
-                        component = new fabric.Textbox('Table\nRow 1\nRow 2', {
-                            ...defaultOptions,
-                            width: options.width || 300,
-                            height: options.height || 100,
-                            fontSize: options.fontSize || 12,
-                            textBaseline: 'alphabetic'
-                        });
-                        break;
-                    case 'chart':
-                        component = new fabric.Rect({
-                            ...defaultOptions,
-                            width: options.width || 300,
-                            height: options.height || 200,
-                            fill: options.fill || '#f0f0f0',
-                            stroke: options.stroke || '#000000',
-                            strokeWidth: options.strokeWidth || 1
-                        });
-                        break;
-                    case 'checkbox':
-                        component = new fabric.Rect({
-                            ...defaultOptions,
-                            width: options.width || 20,
-                            height: options.height || 20,
-                            fill: options.fill || '#ffffff',
-                            stroke: options.stroke || '#000000',
-                            strokeWidth: options.strokeWidth || 2
-                        });
-                        // Add checkmark if checked
-                        if (options.checked) {
-                            const checkmark = new fabric.Text('✓', {
-                                left: 2,
-                                top: -2,
-                                fontSize: 16,
-                                fill: '#000000',
-                                textBaseline: 'alphabetic'
-                            });
-                            component.addWithUpdate(checkmark);
-                        }
-                        break;
-                    case 'richtext':
-                        component = new fabric.Textbox(options.text || 'Rich Text', {
-                            ...defaultOptions,
-                            width: options.width || 200,
-                            height: options.height || 100,
-                            fontSize: options.fontSize || 14,
-                            fill: options.fill || '#000000',
-                            fontStyle: options.fontStyle || 'normal',
-                            fontWeight: options.fontWeight || 'normal',
-                            textDecoration: options.textDecoration || 'none',
-                            textBaseline: 'alphabetic'
-                        });
-                        break;
-                    case 'picturebox':
+                    case 'image':
                         component = new fabric.Rect({
                             ...defaultOptions,
                             width: options.width || 150,
@@ -1255,9 +1214,191 @@
                             textAlign: 'center',
                             originX: 'center',
                             originY: 'center',
-                            textBaseline: 'alphabetic'
                         });
                         component.addWithUpdate(imageText);
+                        component.set('tooltip', 'Image');
+                        break;
+                    case 'list':
+                        component = new fabric.Textbox('List\n• Item 1\n• Item 2\n• Item 3', {
+                            ...defaultOptions,
+                            width: options.width || 200,
+                            height: options.height || 100,
+                        fontSize: options.fontSize || 12,
+                        fill: options.fill || '#000000'
+                        });
+                        component.set('tooltip', 'List');
+                        break;
+                    case 'subreport':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 200,
+                            height: options.height || 150,
+                            fill: options.fill || '#e9ecef',
+                            stroke: options.stroke || '#6c757d',
+                            strokeWidth: options.strokeWidth || 2,
+                            strokeDashArray: [10, 5]
+                        });
+                        // Add subreport text
+                        const subreportText = new fabric.Text('Subreport', {
+                            left: 0,
+                            top: 0,
+                            width: options.width || 200,
+                            height: options.height || 150,
+                            fontSize: 14,
+                            fill: '#495057',
+                            textAlign: 'center',
+                            originX: 'center',
+                            originY: 'center',
+                        });
+                        component.addWithUpdate(subreportText);
+                        component.set('tooltip', 'Subreport');
+                        break;
+                    case 'group':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 250,
+                            height: options.height || 200,
+                            fill: options.fill || 'transparent',
+                            stroke: options.stroke || '#007bff',
+                            strokeWidth: options.strokeWidth || 2,
+                            strokeDashArray: [5, 5]
+                        });
+                        // Add group label
+                        const groupText = new fabric.Text('Group', {
+                            left: 10,
+                            top: 10,
+                        fontSize: 12,
+                        fill: '#007bff',
+                        fontWeight: 'bold'
+                        });
+                        component.addWithUpdate(groupText);
+                        component.set('tooltip', 'Group');
+                        break;
+                    case 'panel':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 200,
+                            height: options.height || 150,
+                            fill: options.fill || '#f8f9fa',
+                            stroke: options.stroke || '#dee2e6',
+                            strokeWidth: options.strokeWidth || 1
+                        });
+                        // Add panel label
+                        const panelText = new fabric.Text('Panel', {
+                            left: 10,
+                            top: 10,
+                            fontSize: 12,
+                            fill: '#6c757d',
+                            fontWeight: 'bold',
+                        });
+                        component.addWithUpdate(panelText);
+                        component.set('tooltip', 'Panel');
+                        break;
+                    case 'pagebreak':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 600,
+                            height: options.height || 20,
+                            fill: options.fill || '#ffc107',
+                            stroke: options.stroke || '#ff8c00',
+                            strokeWidth: options.strokeWidth || 2,
+                            strokeDashArray: [10, 5]
+                        });
+                        // Add page break text
+                        const pageBreakText = new fabric.Text('PAGE BREAK', {
+                            left: 0,
+                            top: 0,
+                            width: options.width || 600,
+                            height: options.height || 20,
+                        fontSize: 10,
+                        fill: '#856404',
+                        textAlign: 'center',
+                        originX: 'center',
+                        originY: 'center',
+                        fontWeight: 'bold'
+                        });
+                        component.addWithUpdate(pageBreakText);
+                        component.set('tooltip', 'Page Break');
+                        break;
+                    case 'spacer':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 200,
+                            height: options.height || 50,
+                            fill: options.fill || 'transparent',
+                            stroke: options.stroke || '#6c757d',
+                            strokeWidth: options.strokeWidth || 1,
+                            strokeDashArray: [5, 5]
+                        });
+                        // Add spacer text
+                        const spacerText = new fabric.Text('Spacer', {
+                            left: 0,
+                            top: 0,
+                            width: options.width || 200,
+                            height: options.height || 50,
+                        fontSize: 10,
+                        fill: '#6c757d',
+                        textAlign: 'center',
+                        originX: 'center',
+                        originY: 'center'
+                        });
+                        component.addWithUpdate(spacerText);
+                        component.set('tooltip', 'Spacer');
+                        break;
+                    case 'richtext':
+                        component = new fabric.Textbox(options.text || 'Rich Text', {
+                            ...defaultOptions,
+                            width: options.width || 200,
+                            height: options.height || 100,
+                            fontSize: options.fontSize || 14,
+                            fill: options.fill || '#000000',
+                            fontStyle: options.fontStyle || 'normal',
+                            fontWeight: options.fontWeight || 'normal',
+                            textDecoration: options.textDecoration || 'none',
+                        });
+                        break;
+                    case 'picturebox':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 150,
+                            height: options.height || 100,
+                            fill: options.fill || '#f8f9fa',
+                            stroke: options.stroke || '#dee2e6',
+                            strokeWidth: options.strokeWidth || 1,
+                            strokeDashArray: [5, 5]
+                        });
+                        // Add image placeholder text
+                        const pictureboxText = new fabric.Text('Image', {
+                            left: 0,
+                            top: 0,
+                            width: options.width || 150,
+                            height: options.height || 100,
+                            fontSize: 12,
+                            fill: '#6c757d',
+                            textAlign: 'center',
+                            originX: 'center',
+                            originY: 'center',
+                        });
+                        component.addWithUpdate(pictureboxText);
+                        break;
+                    case 'rectangle':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 200,
+                            height: options.height || 100,
+                            fill: options.fill || 'transparent',
+                            stroke: options.stroke || '#000000',
+                            strokeWidth: options.strokeWidth || 1
+                        });
+                        component.set('tooltip', 'Rectangle');
+                        break;
+                    case 'line':
+                        component = new fabric.Line([0, 0, options.width || 200, 0], {
+                            ...defaultOptions,
+                            stroke: options.stroke || '#000000',
+                            strokeWidth: options.strokeWidth || 1
+                        });
+                        component.set('tooltip', 'Line');
                         break;
                     case 'shape':
                         const shapeType = options.shapeType || 'rectangle';
@@ -1302,6 +1443,45 @@
                                 });
                         }
                         break;
+                    case 'table':
+                        // Create Excel-like table using HTML overlay
+                        if (typeof ExcelTable === 'undefined') {
+                            console.error('ExcelTable class not loaded');
+                            return;
+                        }
+                        
+                        // Create ExcelTable instance
+                        const tableId = generateGuid();
+                        const excelTable = new ExcelTable({
+                            id: tableId,
+                            position: { x: defaultOptions.left, y: defaultOptions.top },
+                            columns: 5,
+                            rows: 10,
+                            cellWidth: 120,
+                            cellHeight: 24
+                        });
+                        
+                        // Store reference globally
+                        if (!window.excelTables) {
+                            window.excelTables = {};
+                        }
+                        window.excelTables[tableId] = excelTable;
+                        
+                        console.log('Excel table created:', tableId);
+                        
+                        // Don't add to Fabric canvas - ExcelTable is HTML overlay
+                        return;
+                    case 'chart':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 300,
+                            height: options.height || 200,
+                            fill: options.fill || '#f0f0f0',
+                            stroke: options.stroke || '#000000',
+                            strokeWidth: options.strokeWidth || 1
+                        });
+                        component.set('tooltip', 'Chart');
+                        break;
                     case 'barcode':
                         component = new fabric.Rect({
                             ...defaultOptions,
@@ -1322,7 +1502,6 @@
                             textAlign: 'center',
                             originX: 'center',
                             originY: 'center',
-                            textBaseline: 'alphabetic'
                         });
                         component.addWithUpdate(barcodeText);
                         break;
@@ -1345,9 +1524,9 @@
                             textAlign: 'center',
                             originX: 'center',
                             originY: 'center',
-                            textBaseline: 'alphabetic'
                         });
                         component.addWithUpdate(gaugeText);
+                        component.set('tooltip', 'Gauge');
                         break;
                     case 'sparkline':
                         component = new fabric.Rect({
@@ -1369,18 +1548,17 @@
                             textAlign: 'center',
                             originX: 'center',
                             originY: 'center',
-                            textBaseline: 'alphabetic'
                         });
                         component.addWithUpdate(sparklineText);
+                        component.set('tooltip', 'Sparkline');
                         break;
                     case 'pivotgrid':
                         component = new fabric.Textbox('Pivot Grid\nRow 1 | Col 1 | Col 2\nRow 2 | Col 1 | Col 2', {
                             ...defaultOptions,
                             width: options.width || 300,
                             height: options.height || 120,
-                            fontSize: options.fontSize || 12,
-                            fill: options.fill || '#000000',
-                            textBaseline: 'alphabetic'
+                        fontSize: options.fontSize || 12,
+                        fill: options.fill || '#000000'
                         });
                         break;
                     case 'tableofcontents':
@@ -1388,9 +1566,8 @@
                             ...defaultOptions,
                             width: options.width || 200,
                             height: options.height || 100,
-                            fontSize: options.fontSize || 12,
-                            fill: options.fill || '#000000',
-                            textBaseline: 'alphabetic'
+                        fontSize: options.fontSize || 12,
+                        fill: options.fill || '#000000'
                         });
                         break;
                     case 'pageinfo':
@@ -1400,8 +1577,7 @@
                             height: options.height || 40,
                             fontSize: options.fontSize || 10,
                             fill: options.fill || '#6c757d',
-                            textAlign: options.textAlign || 'right',
-                            textBaseline: 'alphabetic'
+                            textAlign: options.textAlign || 'right'
                         });
                         break;
                     case 'crossbandline':
@@ -1423,19 +1599,54 @@
                             strokeDashArray: [3, 3]
                         });
                         break;
+                    case 'crossbandbox':
+                        component = new fabric.Rect({
+                            ...defaultOptions,
+                            width: options.width || 300,
+                            height: options.height || 20,
+                            fill: options.fill || 'transparent',
+                            stroke: options.stroke || '#000000',
+                            strokeWidth: options.strokeWidth || 1,
+                            strokeDashArray: [3, 3]
+                        });
+                        component.set('tooltip', 'Cross Band Box');
+                        break;
+
                     default:
                         component = new fabric.Textbox('Component', {
                             ...defaultOptions,
                             width: 100,
                             height: 50,
-                            textBaseline: 'alphabetic'
                         });
+                        component.set('tooltip', 'Component');
                 }
 
                 component.componentType = type;
+                // Generate GUID inline to avoid scope issues
+                try {
+                    component.id = generateGuid();
+                } catch (e) {
+                    // Fallback if generateGuid not available
+                    component.id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        var r = Math.random() * 16 | 0,
+                            v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                }
                 this.canvas.add(component);
                 this.canvas.setActiveObject(component);
                 this.canvas.renderAll();
+                
+                // Add hover tooltip functionality
+                component.on('mouseover', function(e) {
+                    if (this.tooltip) {
+                        showTooltip(e.e, this.tooltip);
+                    }
+                });
+                
+                component.on('mouseout', function(e) {
+                    hideTooltip();
+                });
                 
                 // Update save button state when object is added
                 console.log('Object added to canvas, updating save button state');
@@ -1457,8 +1668,14 @@
             }
 
             initializePropertyGrid() {
+                // Target the property-content div, not the entire propertyGrid
                 const panel = $(`#${this.panelId}`);
-                panel.html(`
+                // If the propertyGrid is the parent, we need to target the content area
+                const contentArea = panel.find('.property-content').length > 0 
+                    ? panel.find('.property-content') 
+                    : panel;
+                const actualPanel = contentArea.length > 0 ? contentArea : panel;
+                actualPanel.html(`
                     <div class="property-section">
                         <h6 class="property-section-title">Design</h6>
                         <div class="property-group">
@@ -1636,6 +1853,12 @@
                 
                 this.currentObject = object;
                 
+                // Check if this is a table cell
+                if (object.get && (object.get('cellRow') !== undefined)) {
+                    this.updateCellProperties(object);
+                    return;
+                }
+                
                 // Show/hide property groups based on component type
                 this.showRelevantPropertyGroups(object.componentType);
                 
@@ -1700,11 +1923,80 @@
                         break;
                 }
             }
+            
+            updateCellProperties(cell) {
+                // Show cell-specific properties
+                const cellType = cell.get('cellType') === 'header' ? 'Header' : 'Data';
+                $('#prop-name').val(`${cellType} Cell [${cell.get('cellRow')},${cell.get('cellCol')}]`);
+                $('#prop-text').val(cell.get('cellText') || '');
+                $('#prop-fontSize').val(cell.get('fontSize') || 10);
+                $('#prop-fill').val(this.convertToHex(cell.get('textColor') || '#000000'));
+                $('#prop-background').val(this.convertToHex(cell.get('backgroundColor') || '#FFFFFF'));
+                
+                // Show position info (use actual position, not calculated)
+                $('#prop-left').val(Math.round(cell.get('left') || 0));
+                $('#prop-top').val(Math.round(cell.get('top') || 0));
+                $('#prop-width').val(cell.get('cellWidth') || 0);
+                $('#prop-height').val(cell.get('cellHeight') || 0);
+                
+                // Hide groups not relevant to cells
+                $('#prop-checked-group').hide();
+                $('#prop-shapeType-group').hide();
+                $('#prop-value-group').hide();
+                $('#prop-strokeDashArray-group').hide();
+            }
+            
+            updateCellProperty(property, value) {
+                const cell = this.currentObject;
+                if (!cell) return;
+                
+                if (property === 'text') {
+                    cell.set('cellText', value);
+                    const textObj = cell.get('textObj');
+                    if (textObj) textObj.set('text', value);
+                } else if (property === 'fontSize') {
+                    cell.set('fontSize', value);
+                    const textObj = cell.get('textObj');
+                    if (textObj) textObj.set('fontSize', value);
+                } else if (property === 'fill') {
+                    cell.set('textColor', value);
+                    const textObj = cell.get('textObj');
+                    if (textObj) textObj.set('fill', value);
+                } else if (property === 'backgroundColor') {
+                    cell.set('backgroundColor', value);
+                    const bgRect = cell.get('bgRect');
+                    if (bgRect) bgRect.set('fill', value);
+                } else if (property === 'width') {
+                    cell.set('cellWidth', value);
+                    const bgRect = cell.get('bgRect');
+                    if (bgRect) bgRect.set('width', value);
+                    cell.set('width', value);
+                } else if (property === 'height') {
+                    cell.set('cellHeight', value);
+                    const bgRect = cell.get('bgRect');
+                    if (bgRect) bgRect.set('height', value);
+                    cell.set('height', value);
+                } else if (property === 'left') {
+                    cell.set('left', value);
+                } else if (property === 'top') {
+                    cell.set('top', value);
+                }
+                
+                cell.setCoords();
+                if (cell.canvas) {
+                    cell.canvas.renderAll();
+                }
+            }
 
             updateObjectProperty(property, value) {
                 if (this.currentObject) {
-                    this.currentObject.set(property, value);
-                    this.currentObject.canvas.renderAll();
+                    // Check if this is a cell - apply special handling
+                    if (this.currentObject.get && (this.currentObject.get('cellRow') !== undefined)) {
+                        this.updateCellProperty(property, value);
+                    } else {
+                        this.currentObject.set(property, value);
+                        this.currentObject.canvas.renderAll();
+                    }
                 }
             }
 
@@ -1768,6 +2060,152 @@
                 
                 // Default fallback
                 return '#000000';
+            }
+
+            // Data Binding Methods
+            showDataBindingPanel(component) {
+                console.log('Showing data binding panel for:', component);
+                
+                // Target the property content area, not the entire propertyGrid
+                const panel = $(`#${this.panelId}`);
+                const contentArea = panel.closest('.property-panel').find('.property-content');
+                const actualPanel = contentArea.length > 0 ? contentArea : panel;
+                actualPanel.empty();
+                
+                // Parse existing data binding
+                let existingBinding = null;
+                if (component.dataBinding) {
+                    try {
+                        existingBinding = JSON.parse(component.dataBinding);
+                    } catch (e) {
+                        console.error('Error parsing dataBinding:', e);
+                    }
+                }
+                
+                const tableName = existingBinding?.tableName || '';
+                const fieldName = existingBinding?.fieldName || '';
+                
+                const html = `
+                    <div class="property-section">
+                        <h6 class="property-section-title"><i class="fas fa-database me-2"></i>Data Binding</h6>
+                        
+                        <div class="alert alert-info mb-3">
+                            <small><strong>Current Binding:</strong> <span id="dataBindingPreview">${tableName && fieldName ? tableName + '.' + fieldName : 'None'}</span></small>
+                        </div>
+                        
+                        <div class="property-group">
+                            <label class="property-label">Select Data Source</label>
+                            <select class="property-select" id="dataBindingTable">
+                                <option value="">-- Select Table/View --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="property-group" id="dataBindingFieldsGroup" style="display: none;">
+                            <label class="property-label">Select Field</label>
+                            <select class="property-select" id="dataBindingField">
+                                <option value="">-- Select Field --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm flex-grow-1" id="dataBindingApplyBtn">
+                                <i class="fas fa-check"></i> Apply
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="dataBindingClearBtn">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-outline-secondary btn-sm w-100" id="dataBindingCloseBtn">
+                                <i class="fas fa-times"></i> Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                actualPanel.html(html);
+                
+                // Load data sources
+                this.loadDataSourcesForBinding(tableName, fieldName, component.id);
+            }
+
+            async loadDataSourcesForBinding(existingTable = '', existingField = '', componentId = '') {
+                const tableSelect = $('#dataBindingTable');
+                tableSelect.empty().append('<option value="">-- Loading tables...</option>');
+                
+                try {
+                    // Fetch real database schema from the server
+                    const response = await fetch('/Reports/Designer?handler=DatabaseSchema');
+                    const tables = await response.json();
+                    
+                    tableSelect.empty().append('<option value="">-- Select Table/View --</option>');
+                    
+                    // Store schema for later use
+                    this.databaseSchema = {};
+                    
+                    tables.forEach(table => {
+                        const displayName = this.formatTableName(table.name);
+                        const option = $(`<option value="${table.name}">${displayName}</option>`);
+                        tableSelect.append(option);
+                        
+                        // Store columns for this table
+                        this.databaseSchema[table.name] = table.columns || [];
+                    });
+                    
+                    // Select existing binding if any
+                    if (existingTable) {
+                        tableSelect.val(existingTable);
+                        this.loadFieldsForBinding(existingTable, existingField);
+                    }
+                } catch (error) {
+                    console.error('Error loading database schema:', error);
+                    tableSelect.empty().append('<option value="">-- Error loading tables --</option>');
+                }
+            }
+            
+            formatTableName(tableName) {
+                // Convert "TableName" to "Table Name"
+                return tableName.replace(/([A-Z])/g, ' $1').trim();
+            }
+
+            loadFieldsForBinding(tableName, existingField = '') {
+                const fieldSelect = $('#dataBindingField');
+                const fieldsGroup = $('#dataBindingFieldsGroup');
+                
+                fieldSelect.empty().append('<option value="">-- Select Field --</option>');
+                
+                if (!tableName) {
+                    fieldsGroup.hide();
+                    $('#dataBindingPreview').text('None');
+                    return;
+                }
+                
+                // Get columns from the loaded database schema
+                const fields = this.databaseSchema?.[tableName] || [];
+                
+                fields.forEach(field => {
+                    const fieldName = field.name || field;
+                    const option = $(`<option value="${fieldName}">${fieldName}</option>`);
+                    fieldSelect.append(option);
+                });
+                
+                fieldsGroup.show();
+                
+                if (existingField) {
+                    fieldSelect.val(existingField);
+                    this.updateDataBindingPreview();
+                }
+            }
+
+            updateDataBindingPreview() {
+                const tableName = $('#dataBindingTable').val();
+                const fieldName = $('#dataBindingField').val();
+                
+                if (tableName && fieldName) {
+                    $('#dataBindingPreview').text(`${tableName}.${fieldName}`);
+                } else {
+                    $('#dataBindingPreview').text('None');
+                }
             }
         }
 
@@ -1914,6 +2352,9 @@
             // Connect the canvas and property grid
             window.fabricCanvas.setPropertyGrid(window.propertyGrid);
             
+            // Initialize sidebar resize functionality
+            setupSidebarResize();
+            
             // Initialize report name display
             updateReportNameDisplay('');
             
@@ -1974,8 +2415,58 @@
             
             // Load data sources
             dataSourceManager.loadDataSources();
+            
+            // Data binding event handlers
+            $(document).on('change', '#dataBindingTable', function() {
+                const tableName = $(this).val();
+                if (window.propertyGrid) {
+                    window.propertyGrid.loadFieldsForBinding(tableName);
+                }
+            });
 
+            $(document).on('change', '#dataBindingField', function() {
+                if (window.propertyGrid) {
+                    window.propertyGrid.updateDataBindingPreview();
+                }
+            });
+            
+            // Handle Bind Data button click
+            $(document).on('click', '#dataBindingView', function() {
+                showDataBindingPanel();
+            });
 
+            // Handle Parameters button click
+            $(document).on('click', '#parametersView', function() {
+                showParametersPanel();
+            });
+
+            // Handle Filters button click
+            $(document).on('click', '#filtersView', function() {
+                showFiltersPanel();
+            });
+
+            // Handle Apply Data Binding button
+            $(document).on('click', '#dataBindingApplyBtn', function() {
+                applyDataBinding();
+            });
+
+            // Handle Clear Data Binding button
+            $(document).on('click', '#dataBindingClearBtn', function() {
+                clearDataBinding();
+            });
+
+            // Handle Close Data Binding button
+            $(document).on('click', '#dataBindingCloseBtn', function() {
+                // Return to regular property grid
+                if (window.propertyGrid) {
+                    const selectedObject = window.fabricCanvas.canvas.getActiveObject();
+                    if (selectedObject) {
+                        window.propertyGrid.updateProperties(selectedObject);
+                    } else {
+                        window.propertyGrid.clearProperties();
+                    }
+                }
+            });
 
             // Initial save button state
             console.log('Setting initial save button state');
@@ -2018,7 +2509,6 @@
                                 padding: 5,
                                 borderColor: '#cccccc',
                                 borderWidth: 1,
-                                textBaseline: 'alphabetic'
                             });
                             
                             // Add custom properties to identify this as a data field
@@ -2375,14 +2865,6 @@
                 return window.currentReportId || null;
             }
 
-            function generateGuid() {
-                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                    var r = Math.random() * 16 | 0,
-                        v = c == 'x' ? r : (r & 0x3 | 0x8);
-                    return v.toString(16);
-                });
-            }
-
             function updateReportNameDisplay(reportTitle) {
                 const reportNameElement = document.getElementById('currentReportName');
                 if (reportNameElement) {
@@ -2394,6 +2876,266 @@
                         reportNameElement.className = 'ms-3 text-muted';
                     }
                 }
+            }
+
+            // Sidebar Resize Functionality
+            function setupSidebarResize() {
+                const sidebar = document.querySelector('.right-sidebar');
+                const resizeHandle = document.querySelector('.sidebar-resize-handle');
+                
+                if (!sidebar || !resizeHandle) return;
+                
+                // Load saved width from localStorage
+                const savedWidth = localStorage.getItem('sidebarWidth');
+                if (savedWidth) {
+                    sidebar.style.width = savedWidth + 'px';
+                    sidebar.style.flexShrink = '0'; // Prevent sidebar from shrinking
+                    sidebar.style.flexGrow = '0'; // Prevent sidebar from growing
+                    sidebar.style.marginLeft = 'auto'; // Keep on right
+                }
+                
+                let isResizing = false;
+                let startX = 0;
+                let startWidth = 0;
+                
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    startX = e.clientX;
+                    startWidth = sidebar.offsetWidth;
+                    
+                    // Prevent text selection while dragging
+                    document.body.style.userSelect = 'none';
+                    document.body.style.cursor = 'col-resize';
+                    
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                
+                const onMouseMove = (e) => {
+                    if (!isResizing) return;
+                    
+                    // Calculate width change based on mouse movement
+                    // Drag left (toward the left side) = make sidebar wider
+                    // Drag right (toward the right side) = make sidebar narrower
+                    const diff = startX - e.clientX; // Invert: left = positive, right = negative
+                    const newWidth = Math.max(200, Math.min(800, startWidth + diff));
+                    
+                    sidebar.style.width = newWidth + 'px';
+                    sidebar.style.flexShrink = '0'; // Keep sidebar fixed width
+                    sidebar.style.flexGrow = '0'; // Prevent growing
+                    sidebar.style.marginLeft = 'auto'; // Keep on right
+                };
+                
+                const onMouseUp = () => {
+                    if (isResizing) {
+                        // Save the new width to localStorage
+                        localStorage.setItem('sidebarWidth', sidebar.offsetWidth);
+                    }
+                    isResizing = false;
+                    
+                    // Restore cursor and selection
+                    document.body.style.userSelect = '';
+                    document.body.style.cursor = '';
+                    
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+            }
+
+            // Data Binding Functions
+            function applyDataBinding() {
+                const selectedObject = window.fabricCanvas.canvas.getActiveObject();
+                if (!selectedObject) {
+                    alert('Please select a component first');
+                    return;
+                }
+                
+                const tableName = $('#dataBindingTable').val();
+                const fieldName = $('#dataBindingField').val();
+                
+                if (!tableName || !fieldName) {
+                    alert('Please select both a table and a field');
+                    return;
+                }
+                
+                // Create data binding object
+                const dataBinding = {
+                    tableName: tableName,
+                    fieldName: fieldName,
+                    dataType: 'string'
+                };
+                
+                // Store in component's custom properties
+                selectedObject.dataBinding = JSON.stringify(dataBinding);
+                
+                // Update the visual display
+                if (selectedObject.componentType === 'textbox' || selectedObject.componentType === 'label') {
+                    selectedObject.set('text', `[${tableName}.${fieldName}]`);
+                }
+                
+                selectedObject.setCoords();
+                window.fabricCanvas.canvas.renderAll();
+                
+                // Save to database
+                saveComponentDataBinding(selectedObject.id, dataBinding);
+                
+                alert('Data binding applied successfully');
+                
+                // Close the data binding panel and return to properties view
+                if (window.propertyGrid) {
+                    window.propertyGrid.updateProperties(selectedObject);
+                }
+            }
+
+            function clearDataBinding() {
+                const selectedObject = window.fabricCanvas.canvas.getActiveObject();
+                if (selectedObject) {
+                    selectedObject.dataBinding = null;
+                    if (selectedObject.componentType === 'textbox' || selectedObject.componentType === 'label') {
+                        selectedObject.set('text', selectedObject.componentType === 'textbox' ? 'Text' : 'Label');
+                    }
+                    selectedObject.setCoords();
+                    window.fabricCanvas.canvas.renderAll();
+                    
+                    saveComponentDataBinding(selectedObject.id, null);
+                    alert('Data binding cleared');
+                }
+            }
+
+            async function saveComponentDataBinding(componentId, dataBinding) {
+                try {
+                    const token = $('input[name="__RequestVerificationToken"]').val();
+                    
+                    const response = await fetch(`/Reports/Designer?handler=SaveDataBinding&componentId=${componentId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({ dataBinding: dataBinding })
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Data binding saved successfully');
+                    } else {
+                        console.error('Failed to save data binding');
+                    }
+                } catch (error) {
+                    console.error('Error saving data binding:', error);
+                }
+            }
+
+            function showDataBindingPanel() {
+                console.log('showDataBindingPanel called');
+                if (window.propertyGrid && window.fabricCanvas) {
+                    const activeObject = window.fabricCanvas.canvas.getActiveObject();
+                    console.log('Active object:', activeObject);
+                    if (activeObject) {
+                        console.log('Calling propertyGrid.showDataBindingPanel');
+                        window.propertyGrid.showDataBindingPanel(activeObject);
+                    } else {
+                        alert('Please select a component first');
+                    }
+                } else {
+                    console.log('Window objects not available:', {
+                        propertyGrid: window.propertyGrid,
+                        fabricCanvas: window.fabricCanvas
+                    });
+                }
+            }
+
+            function showParametersPanel() {
+                console.log('showParametersPanel called');
+                const reportId = window.currentReportId;
+                if (!reportId) {
+                    alert('Please create or load a report first');
+                    return;
+                }
+                
+                loadParameters(reportId);
+            }
+            
+            async function loadParameters(reportId) {
+                try {
+                    const response = await fetch(`?handler=Parameters&reportId=${reportId}`);
+                    if (!response.ok) {
+                        console.error('Failed to load parameters');
+                        return;
+                    }
+                    
+                    const parameters = await response.json();
+                    renderParametersPanel(parameters, reportId);
+                } catch (error) {
+                    console.error('Error loading parameters:', error);
+                }
+            }
+            
+            function renderParametersPanel(parameters, reportId) {
+                const panel = $('#propertyContent');
+                panel.empty();
+                
+                let html = `
+                    <div class="property-section">
+                        <h6 class="property-section-title"><i class="fas fa-sliders-h me-2"></i>Report Parameters</h6>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-primary btn-sm" onclick="showAddParameterModal('${reportId}')">
+                                <i class="fas fa-plus"></i> Add Parameter
+                            </button>
+                        </div>
+                        
+                        <div id="parametersList">
+                `;
+                
+                if (parameters && parameters.length > 0) {
+                    parameters.forEach(param => {
+                        html += renderParameterItem(param);
+                    });
+                } else {
+                    html += '<div class="alert alert-info">No parameters defined</div>';
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+                
+                panel.html(html);
+            }
+            
+            function renderParameterItem(param) {
+                const typeNames = {
+                    0: 'Text',
+                    1: 'Integer',
+                    2: 'Decimal',
+                    3: 'Date/Time',
+                    4: 'Yes/No',
+                    5: 'Date Range',
+                    6: 'Lookup (Single)',
+                    7: 'Lookup (Multiple)'
+                };
+                
+                return `
+                    <div class="card mb-2" data-parameter-id="${param.id}">
+                        <div class="card-body">
+                            <h6 class="card-title">${param.parameterName}</h6>
+                            <p class="card-text"><small class="text-muted">Type: ${typeNames[param.parameterType]}</small></p>
+                            ${param.prompt ? `<p class="card-text"><small>${param.prompt}</small></p>` : ''}
+                            ${param.required ? '<span class="badge bg-danger">Required</span>' : ''}
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-secondary" onclick="editParameter('${param.id}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteParameter('${param.id}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
 
             async function loadExistingReport(reportId) {
@@ -2412,11 +3154,22 @@
                     // Clear the canvas first
                     window.fabricCanvas.canvas.clear();
                     
+                    // Restore canvas size if available in metadata
+                    if (report.metadata && report.metadata.canvasData) {
+                        const canvasData = report.metadata.canvasData;
+                        if (canvasData.width && canvasData.height) {
+                            window.fabricCanvas.resizeCanvas(canvasData.width, canvasData.height);
+                        }
+                        if (canvasData.zoom) {
+                            window.fabricCanvas.canvas.setZoom(canvasData.zoom);
+                        }
+                    }
+                    
                     // Load components onto the canvas
                     if (report.components && report.components.length > 0) {
-                        report.components.forEach(component => {
-                            addComponentToCanvas(component);
-                        });
+                        for (const component of report.components) {
+                            await addComponentToCanvas(component);
+                        }
                     }
                     
                     // Enable save button since we have a loaded report
@@ -2429,7 +3182,786 @@
                 }
             }
 
-            function addComponentToCanvas(component) {
+            async function fetchTableData(dataSource, fields) {
+                console.log('fetchTableData called with:', dataSource, fields);
+                try {
+                    // Build SQL query
+                    const fieldList = fields.join(', ');
+                    const query = `SELECT TOP 20 ${fieldList} FROM ${dataSource}`;
+                    console.log('Executing SQL query:', query);
+                    
+                    const response = await fetch(`/Reports/Designer?handler=ExecuteQuery&sql=${encodeURIComponent(query)}`);
+                    console.log('Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Failed to fetch table data:', errorText);
+                        return [];
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Query returned:', result);
+                    return result.data || [];
+                } catch (error) {
+                    console.error('Error fetching table data:', error);
+                    return [];
+                }
+            }
+
+            // Create a single editable cell
+            function createTableCell(cellData, x, y, width, height, rowIndex, colIndex, isHeader = false) {
+                // Cell is positioned absolutely on canvas
+                const cellGroup = new fabric.Group([], {
+                    left: x,
+                    top: y,
+                    width: width,
+                    height: height,
+                    selectable: true,
+                    hasBorders: true,
+                    hasControls: false, // No resize controls on individual cells
+                    lockMovementX: false, // Allow movement for better interaction
+                    lockMovementY: false,
+                    lockScalingX: true,
+                    lockScalingY: true,
+                    lockRotation: true
+                });
+                
+                // Set cell properties
+                cellGroup.set('cellRow', rowIndex);
+                cellGroup.set('cellCol', colIndex);
+                cellGroup.set('cellType', isHeader ? 'header' : 'data');
+                cellGroup.set('cellWidth', width);
+                cellGroup.set('cellHeight', height);
+                cellGroup.set('cellText', cellData.text || '');
+                cellGroup.set('fontSize', cellData.fontSize || (isHeader ? 11 : 10));
+                cellGroup.set('fontFamily', cellData.fontFamily || 'Arial');
+                cellGroup.set('textColor', cellData.textColor || (isHeader ? '#FFFFFF' : '#000000'));
+                cellGroup.set('backgroundColor', cellData.backgroundColor || (isHeader ? '#4472C4' : '#FFFFFF'));
+                cellGroup.set('fontWeight', isHeader ? 'bold' : 'normal');
+                
+                // Background
+                const bg = new fabric.Rect({
+                    left: 0,
+                    top: 0,
+                    width: width,
+                    height: height,
+                    fill: cellGroup.get('backgroundColor'),
+                    stroke: '#000000',
+                    strokeWidth: 1
+                });
+                bg.set('selectable', false);
+                bg.set('excludeFromExport', false);
+                
+                // Text
+                const text = new fabric.Text(cellGroup.get('cellText'), {
+                    left: 5,
+                    top: 5,
+                    fontSize: cellGroup.get('fontSize'),
+                    fontFamily: cellGroup.get('fontFamily'),
+                    fill: cellGroup.get('textColor'),
+                    fontWeight: cellGroup.get('fontWeight')
+                });
+                text.set('selectable', false);
+                text.set('excludeFromExport', false);
+                
+                cellGroup.addWithUpdate(bg);
+                cellGroup.addWithUpdate(text);
+                
+                // CRITICAL: Set position AFTER adding objects, otherwise Fabric.js resets it
+                cellGroup.set({
+                    left: x,
+                    top: y
+                });
+                
+                // Make cells selectable but not individually resizable
+                cellGroup.set({
+                    selectable: true,
+                    hasControls: false,  // Don't show resize corners on individual cells
+                    hasBorders: true
+                });
+                
+                // Improve selection appearance
+                cellGroup.on('selected', function() {
+                    this.bringToFront();
+                    console.log('Cell selected:', this.get('cellRow'), this.get('cellCol'));
+                    if (window.propertyGrid) {
+                        window.propertyGrid.updateProperties(this);
+                    }
+                });
+                
+                cellGroup.on('deselected', function() {
+                    // Optional: Handle deselection
+                });
+                
+                // Add context menu for table operations
+                cellGroup.on('mousedown', function(e) {
+                    console.log('Cell mousedown event');
+                    const evt = e.e.originalEvent || e.e;
+                    if (evt.which === 3 || evt.button === 2) { // Right-click
+                        evt.preventDefault();
+                        evt.stopPropagation();
+                        console.log('Right-click detected on cell');
+                        showTableContextMenu(e, cellGroup);
+                        return false;
+                    }
+                });
+                
+                // Also handle right-click via contextmenu event
+                cellGroup.on('contextmenu', function(e) {
+                    const evt = e.e.originalEvent || e.e;
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    console.log('Context menu event on cell');
+                    showTableContextMenu(e, cellGroup);
+                    return false;
+                });
+                
+                // Store references to sub-objects for easy updates
+                cellGroup.set('bgRect', bg);
+                cellGroup.set('textObj', text);
+                
+                return cellGroup;
+            }
+            
+            // Update a cell's appearance
+            function updateCellAppearance(cell) {
+                const bg = cell.get('bgRect');
+                const text = cell.get('textObj');
+                
+                if (bg) {
+                    bg.set('fill', cell.get('backgroundColor'));
+                }
+                if (text) {
+                    text.set('text', cell.get('cellText'));
+                    text.set('fontSize', cell.get('fontSize'));
+                    text.set('fill', cell.get('textColor'));
+                }
+                
+                cell.setCoords();
+                if (window.fabricCanvas && window.fabricCanvas.canvas) {
+                    window.fabricCanvas.canvas.renderAll();
+                }
+            }
+
+            // Show table context menu
+            function showTableContextMenu(e, cell) {
+                const rowIndex = cell.get('cellRow');
+                const colIndex = cell.get('cellCol');
+                const isHeader = cell.get('cellType') === 'header';
+                const tableId = cell.get('tableId');
+                
+                // Remove any existing context menu
+                $('.table-context-menu').remove();
+                
+                const menu = $(`
+                    <div class="table-context-menu" style="position: absolute; background: white; border: 1px solid #ccc; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 10000;">
+                        <div class="context-menu-item" style="padding: 8px 20px; cursor: pointer; border-bottom: 1px solid #eee;">
+                            Insert Row Above
+                        </div>
+                        <div class="context-menu-item" style="padding: 8px 20px; cursor: pointer; border-bottom: 1px solid #eee;">
+                            Insert Row Below
+                        </div>
+                        <div class="context-menu-item" style="padding: 8px 20px; cursor: pointer; border-bottom: 1px solid #eee;">
+                            Delete Row
+                        </div>
+                        <div class="context-menu-item" style="padding: 8px 20px; cursor: pointer; border-bottom: 1px solid #eee;">
+                            Insert Column Left
+                        </div>
+                        <div class="context-menu-item" style="padding: 8px 20px; cursor: pointer; border-bottom: 1px solid #eee;">
+                            Insert Column Right
+                        </div>
+                        <div class="context-menu-item" style="padding: 8px 20px; cursor: pointer;">
+                            Delete Column
+                        </div>
+                    </div>
+                `);
+                
+                $('body').append(menu);
+                menu.css({
+                    top: e.e.clientY + 'px',
+                    left: e.e.clientX + 'px'
+                });
+                
+                menu.find('.context-menu-item').on('click', function() {
+                    const action = $(this).text();
+                    handleTableAction(action, tableId, rowIndex, colIndex);
+                    menu.remove();
+                });
+                
+                $(document).on('click.contextmenu', function() {
+                    menu.remove();
+                    $(document).off('click.contextmenu');
+                });
+            }
+            
+            // Handle table actions from context menu
+            function handleTableAction(action, tableId, rowIndex, colIndex) {
+                console.log('Table action:', action, 'at', rowIndex, colIndex);
+                
+                if (action.includes('Insert Row Above')) {
+                    insertTableRow(tableId, rowIndex, true);
+                } else if (action.includes('Insert Row Below')) {
+                    insertTableRow(tableId, rowIndex, false);
+                } else if (action.includes('Delete Row')) {
+                    deleteTableRow(tableId, rowIndex);
+                } else if (action.includes('Insert Column Left')) {
+                    insertTableColumn(tableId, colIndex, true);
+                } else if (action.includes('Insert Column Right')) {
+                    insertTableColumn(tableId, colIndex, false);
+                } else if (action.includes('Delete Column')) {
+                    deleteTableColumn(tableId, colIndex);
+                }
+            }
+            
+            // Insert a row in the table
+            function insertTableRow(tableId, rowIndex, above) {
+                // Get all cells
+                const allCells = window.fabricCanvas.canvas.getObjects().filter(obj => 
+                    obj.get && obj.get('tableId') === tableId && obj.get('cellRow') !== undefined
+                );
+                
+                const insertAt = above ? rowIndex : rowIndex + 1;
+                
+                // Shift rows down
+                allCells.forEach(cell => {
+                    const cellRow = cell.get('cellRow');
+                    if (cellRow >= insertAt) {
+                        cell.set('cellRow', cellRow + 1);
+                        // Update position based on row height
+                        const metadata = allCells[0].get('tableMetadata');
+                        if (metadata) {
+                            const cellHeight = cellRow === 0 ? metadata.rowHeights[0] : metadata.rowHeights[cellRow];
+                            cell.set('top', cell.top + cellHeight);
+                        }
+                    }
+                });
+                
+                // Create new row cells
+                const metadata = allCells[0].get('tableMetadata');
+                if (metadata) {
+                    const cellWidth = metadata.columnWidths[0] || 120;
+                    const cellHeight = rowIndex === 0 ? 30 : 25;
+                    const tableLeft = metadata.tableLeft;
+                    const tableTop = metadata.tableTop;
+                    
+                    // Calculate Y position for new row
+                    let newY = tableTop;
+                    for (let i = 0; i < insertAt; i++) {
+                        newY += metadata.rowHeights[i] || cellHeight;
+                    }
+                    
+                    // Create cells for new row
+                    for (let col = 0; col < metadata.numColumns; col++) {
+                        const cellData = {
+                            text: '[New]',
+                            fontSize: 10,
+                            fontFamily: 'Arial',
+                            textColor: '#000000',
+                            backgroundColor: insertAt % 2 === 0 ? '#FFFFFF' : '#F2F2F2'
+                        };
+                        const cell = createTableCell(cellData, tableLeft + (col * cellWidth), newY, cellWidth, cellHeight, insertAt, col, false);
+                        cell.set('tableId', tableId);
+                        cell.set('id', generateGuid());
+                        window.fabricCanvas.canvas.add(cell);
+                    }
+                    
+                    // Update metadata
+                    metadata.numRows++;
+                    metadata.rowHeights.splice(insertAt, 0, cellHeight);
+                }
+                
+                window.fabricCanvas.canvas.renderAll();
+            }
+            
+            // Delete a row from the table
+            function deleteTableRow(tableId, rowIndex) {
+                // Get all cells
+                const allCells = window.fabricCanvas.canvas.getObjects().filter(obj => 
+                    obj.get && obj.get('tableId') === tableId && obj.get('cellRow') !== undefined
+                );
+                
+                // Delete cells in this row
+                allCells.forEach(cell => {
+                    if (cell.get('cellRow') === rowIndex) {
+                        window.fabricCanvas.canvas.remove(cell);
+                    }
+                });
+                
+                // Shift rows up
+                const metadata = allCells[0].get('tableMetadata');
+                allCells.forEach(cell => {
+                    const cellRow = cell.get('cellRow');
+                    if (cellRow > rowIndex && metadata) {
+                        cell.set('cellRow', cellRow - 1);
+                        const cellHeight = metadata.rowHeights[rowIndex] || 25;
+                        cell.set('top', cell.top - cellHeight);
+                    }
+                });
+                
+                // Update metadata
+                if (metadata) {
+                    metadata.numRows--;
+                    metadata.rowHeights.splice(rowIndex, 1);
+                }
+                
+                window.fabricCanvas.canvas.renderAll();
+            }
+            
+            // Insert a column in the table
+            function insertTableColumn(tableId, colIndex, left) {
+                // Get all cells
+                const allCells = window.fabricCanvas.canvas.getObjects().filter(obj => 
+                    obj.get && obj.get('tableId') === tableId && obj.get('cellCol') !== undefined
+                );
+                
+                const insertAt = left ? colIndex : colIndex + 1;
+                
+                // Shift columns right
+                const metadata = allCells[0].get('tableMetadata');
+                const cellWidth = metadata ? metadata.columnWidths[insertAt] || 120 : 120;
+                
+                allCells.forEach(cell => {
+                    const cellCol = cell.get('cellCol');
+                    if (cellCol >= insertAt) {
+                        cell.set('cellCol', cellCol + 1);
+                        cell.set('left', cell.left + cellWidth);
+                    }
+                });
+                
+                // Create new column cells
+                if (metadata) {
+                    const tableLeft = metadata.tableLeft;
+                    const tableTop = metadata.tableTop;
+                    let currentY = tableTop;
+                    
+                    for (let row = 0; row < metadata.numRows; row++) {
+                        const cellData = {
+                            text: row === 0 ? 'Col' + (insertAt + 1) : '[New]',
+                            fontSize: row === 0 ? 11 : 10,
+                            fontFamily: 'Arial',
+                            textColor: row === 0 ? '#FFFFFF' : '#000000',
+                            backgroundColor: row === 0 ? '#4472C4' : (row % 2 === 0 ? '#FFFFFF' : '#F2F2F2')
+                        };
+                        const cellHeight = metadata.rowHeights[row] || 25;
+                        const cell = createTableCell(cellData, tableLeft + (insertAt * cellWidth), currentY, cellWidth, cellHeight, row, insertAt, row === 0);
+                        cell.set('tableId', tableId);
+                        cell.set('id', generateGuid());
+                        window.fabricCanvas.canvas.add(cell);
+                        currentY += cellHeight;
+                    }
+                    
+                    // Update metadata
+                    metadata.numColumns++;
+                    metadata.columnWidths.splice(insertAt, 0, cellWidth);
+                }
+                
+                window.fabricCanvas.canvas.renderAll();
+            }
+            
+            // Delete a column from the table
+            function deleteTableColumn(tableId, colIndex) {
+                // Get all cells
+                const allCells = window.fabricCanvas.canvas.getObjects().filter(obj => 
+                    obj.get && obj.get('tableId') === tableId && obj.get('cellCol') !== undefined
+                );
+                
+                // Delete cells in this column
+                const metadata = allCells[0].get('tableMetadata');
+                const cellWidth = metadata ? metadata.columnWidths[colIndex] || 120 : 120;
+                
+                allCells.forEach(cell => {
+                    if (cell.get('cellCol') === colIndex) {
+                        window.fabricCanvas.canvas.remove(cell);
+                    }
+                });
+                
+                // Shift columns left
+                allCells.forEach(cell => {
+                    const cellCol = cell.get('cellCol');
+                    if (cellCol > colIndex) {
+                        cell.set('cellCol', cellCol - 1);
+                        cell.set('left', cell.left - cellWidth);
+                    }
+                });
+                
+                // Update metadata
+                if (metadata) {
+                    metadata.numColumns--;
+                    metadata.columnWidths.splice(colIndex, 1);
+                }
+                
+                window.fabricCanvas.canvas.renderAll();
+            }
+
+            // Function to update column width when resizing
+            function updateColumnWidth(colIndex, deltaX, tableId) {
+                const tableCells = window.fabricCanvas.canvas.getObjects().filter(obj => 
+                    obj.get && obj.get('tableId') === tableId && obj.get('cellCol') !== undefined
+                );
+                
+                // Update all cells in this column and to the right
+                tableCells.forEach(cell => {
+                    const cellCol = cell.get('cellCol');
+                    if (cellCol >= colIndex) {
+                        const newLeft = cell.left + deltaX;
+                        cell.set('left', newLeft);
+                    }
+                });
+                
+                // Update column resize handles to the right
+                const resizeHandles = window.fabricCanvas.canvas.getObjects().filter(obj =>
+                    obj.get && obj.get('isResizeHandle') && obj.get('tableId') === tableId && obj.get('isColumnResize')
+                );
+                
+                resizeHandles.forEach(handle => {
+                    const handleCol = handle.get('columnIndex');
+                    if (handleCol > colIndex) {
+                        const newX = handle.x1 + deltaX;
+                        handle.set({ x1: newX, x2: newX });
+                    }
+                });
+                
+                window.fabricCanvas.canvas.renderAll();
+            }
+            
+            // Function to update row height when resizing
+            function updateRowHeight(rowIndex, deltaY, tableId) {
+                const tableCells = window.fabricCanvas.canvas.getObjects().filter(obj => 
+                    obj.get && obj.get('tableId') === tableId && obj.get('cellRow') !== undefined
+                );
+                
+                // Update all cells in query row and below
+                tableCells.forEach(cell => {
+                    const cellRow = cell.get('cellRow');
+                    if (cellRow >= rowIndex) {
+                        const newTop = cell.top + deltaY;
+                        cell.set('top', newTop);
+                    }
+                });
+                
+                // Update row resize handles below
+                const resizeHandles = window.fabricCanvas.canvas.getObjects().filter(obj =>
+                    obj.get && obj.get('isResizeHandle') && obj.get('tableId') === tableId && obj.get('isRowResize')
+                );
+                
+                resizeHandles.forEach(handle => {
+                    const handleRow = handle.get('rowIndex');
+                    if (handleRow > rowIndex) {
+                        const newY = handle.y1 + deltaY;
+                        handle.set({ y1: newY, y2: newY });
+                    }
+                });
+                
+                window.fabricCanvas.canvas.renderAll();
+            }
+
+            async function createTableComponent(component) {
+                console.log('Creating table component:', component);
+                
+                // Parse properties to get table structure
+                let fields = ['Column1', 'Column2', 'Column3'];
+                let dataSource = null;
+                
+                // Try to get from properties first
+                if (component.properties) {
+                    try {
+                        const props = typeof component.properties === 'string' 
+                            ? JSON.parse(component.properties) 
+                            : component.properties;
+                        console.log('Table properties:', props);
+                        
+                        if (props.Fields && Array.isArray(props.Fields)) {
+                            fields = props.Fields;
+                        }
+                        if (props.DataSource) {
+                            dataSource = props.DataSource;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing table properties:', e);
+                    }
+                }
+                
+                // If no data source in properties, try dataBinding
+                if (!dataSource && component.dataBinding) {
+                    try {
+                        const binding = typeof component.dataBinding === 'string' 
+                            ? JSON.parse(component.dataBinding) 
+                            : component.dataBinding;
+                        console.log('Table data binding:', binding);
+                        
+                        if (binding.DataSource) {
+                            dataSource = binding.DataSource;
+                        }
+                        if (binding.Fields && Array.isArray(binding.Fields)) {
+                            fields = binding.Fields;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing table data binding:', e);
+                    }
+                }
+                
+                // If still no data source, use default
+                if (!dataSource) {
+                    dataSource = 'Data';
+                    console.warn('No data source found, using default:', dataSource);
+                }
+                
+                console.log('Final table config:', { dataSource, fields });
+                
+                // Fetch actual data
+                console.log('About to fetch table data...');
+                let tableData = [];
+                try {
+                    tableData = await fetchTableData(dataSource, fields);
+                    console.log('Table data fetched:', tableData.length, 'rows');
+                } catch (error) {
+                    console.error('Error fetching data for table:', error);
+                }
+                
+                // Table settings
+                const cellHeight = 25;
+                const headerHeight = 30;
+                const cellWidth = 120;
+                const borderWidth = 1;
+                const numColumns = fields.length;
+                const numRows = 5; // Show 5 sample rows in designer
+                const tableWidth = numColumns * cellWidth;
+                const tableHeight = headerHeight + (numRows * cellHeight);
+                
+                // Create table metadata (no Group - cells added individually)
+                const tableGroup = null;
+                
+                // Create header row cells and add to canvas
+                const tableLeft = component.positionX;
+                const tableTop = component.positionY;
+                
+                fields.forEach((field, colIndex) => {
+                    const cellData = {
+                        text: field,
+                        fontSize: 11,
+                        fontFamily: 'Arial',
+                        textColor: '#FFFFFF',
+                        backgroundColor: '#4472C4'
+                    };
+                    const cell = createTableCell(cellData, tableLeft + (colIndex * cellWidth), tableTop, cellWidth, headerHeight, 0, colIndex, true);
+                    cell.set('tableId', component.id); // Link to table
+                    cell.set('id', generateGuid()); // Give cell unique ID
+                    window.fabricCanvas.canvas.add(cell);
+                });
+                
+                // Create data rows with actual data
+                const actualRows = Math.min(numRows, tableData.length);
+                for (let row = 0; row < actualRows; row++) {
+                    const rowData = tableData[row];
+                    fields.forEach((field, colIndex) => {
+                        const cellValue = rowData && rowData[field] ? String(rowData[field]).substring(0, 15) : '[Data]';
+                        const cellData = {
+                            text: cellValue,
+                            fontSize: 10,
+                            fontFamily: 'Arial',
+                            textColor: '#000000',
+                            backgroundColor: row % 2 === 0 ? '#FFFFFF' : '#F2F2F2'
+                        };
+                        const cell = createTableCell(cellData, tableLeft + (colIndex * cellWidth), tableTop + headerHeight + (row * cellHeight), cellWidth, cellHeight, row + 1, colIndex, false);
+                        cell.set('tableId', component.id); // Link to table
+                        cell.set('id', generateGuid()); // Give cell unique ID
+                        window.fabricCanvas.canvas.add(cell);
+                    });
+                }
+                
+                // If we have fewer rows than numRows, fill with placeholder rows
+                for (let row = actualRows; row < numRows; row++) {
+                    fields.forEach((field, colIndex) => {
+                        const cellData = {
+                            text: '[Data]',
+                            fontSize: 10,
+                            fontFamily: 'Arial',
+                            textColor: '#666666',
+                            backgroundColor: row % 2 === 0 ? '#FFFFFF' : '#F2F2F2'
+                        };
+                        const cell = createTableCell(cellData, tableLeft + (colIndex * cellWidth), tableTop + headerHeight + (row * cellHeight), cellWidth, cellHeight, row + 1, colIndex, false);
+                        cell.set('tableId', component.id); // Link to table
+                        cell.set('id', generateGuid()); // Give cell unique ID
+                        window.fabricCanvas.canvas.add(cell);
+                    });
+                }
+                
+                // Store table metadata on first cell for reference
+                const firstCell = window.fabricCanvas.canvas.getObjects().find(obj => obj.get('tableId') === component.id);
+                if (firstCell) {
+                    firstCell.set('tableMetadata', {
+                        fields: fields,
+                        dataSource: dataSource,
+                        numColumns: numColumns,
+                        numRows: numRows + 1,
+                        columnWidths: Array(numColumns).fill(cellWidth),
+                        rowHeights: [headerHeight, ...Array(numRows).fill(cellHeight)],
+                        tableLeft: tableLeft,
+                        tableTop: tableTop
+                    });
+                }
+                
+                // Add column resize handles (vertical lines on column borders)
+                console.log('Creating column resize handles for', numColumns, 'columns');
+                for (let col = 0; col <= numColumns; col++) {
+                    const x = tableLeft + (col * cellWidth);
+                    const resizeHandle = new fabric.Line([x, tableTop, x, tableTop + tableHeight], {
+                        stroke: 'rgba(33, 150, 243, 0.3)',
+                        strokeWidth: 4,
+                        selectable: false,
+                        evented: true,
+                        excludeFromExport: true,
+                        hasControls: false,
+                        hasBorders: false,
+                        hoverCursor: 'col-resize'
+                    });
+                    resizeHandle.set('isResizeHandle', true);
+                    resizeHandle.set('isColumnResize', true);
+                    resizeHandle.set('tableId', component.id);
+                    resizeHandle.set('columnIndex', col);
+                    console.log('Column resize handle created at x:', x);
+                    
+                    // Add hover effect
+                    resizeHandle.on('mouseover', function() {
+                        this.set('stroke', '#2196F3');
+                        this.set('strokeWidth', 2);
+                        this.set('evented', true);
+                        window.fabricCanvas.canvas.renderAll();
+                    });
+                    
+                    resizeHandle.on('mouseout', function() {
+                        this.set('stroke', 'transparent');
+                        this.set('strokeWidth', 8);
+                        window.fabricCanvas.canvas.renderAll();
+                    });
+                    
+                    // Handle dragging to resize column
+                    resizeHandle.on('mousedown', function(e) {
+                        if (this.get('isColumnResize')) {
+                            const handle = this;
+                            let initialX = e.e.clientX;
+                            let colIndex = this.get('columnIndex');
+                            
+                            const onMouseMove = function(e) {
+                                const deltaX = e.clientX - initialX;
+                                const newX = handle.x1 + deltaX;
+                                
+                                // Update the resize handle position
+                                handle.set({
+                                    x1: newX,
+                                    x2: newX
+                                });
+                                
+                                // Update all cells in this and subsequent columns
+                                updateColumnWidth(colIndex, deltaX, component.id);
+                                
+                                initialX = e.clientX;
+                                window.fabricCanvas.canvas.renderAll();
+                            };
+                            
+                            const onMouseUp = function() {
+                                $(document).off('mousemove', onMouseMove);
+                                $(document).off('mouseup', onMouseUp);
+                                window.fabricCanvas.canvas.renderAll();
+                            };
+                            
+                            $(document).on('mousemove', onMouseMove);
+                            $(document).on('mouseup', onMouseUp);
+                        }
+                    });
+                    
+                    window.fabricCanvas.canvas.add(resizeHandle);
+                    window.fabricCanvas.canvas.bringToFront(resizeHandle);
+                }
+                
+                // Add row resize handles (horizontal lines on row borders)
+                for (let row = 0; row <= (numRows + 1); row++) {
+                    const y = tableTop + (row === 0 ? 0 : (row === 1 ? headerHeight : headerHeight + ((row - 1) * cellHeight)));
+                    const resizeHandle = new fabric.Line([tableLeft, y, tableLeft + tableWidth, y], {
+                        stroke: 'transparent',
+                        strokeWidth: 8,
+                        selectable: false,
+                        evented: false,
+                        excludeFromExport: true,
+                        hasControls: false,
+                        hasBorders: false
+                    });
+                    resizeHandle.set('isResizeHandle', true);
+                    resizeHandle.set('isRowResize', true);
+                    resizeHandle.set('tableId', component.id);
+                    resizeHandle.set('rowIndex', row);
+                    resizeHandle.set('hoverCursor', 'row-resize');
+                    
+                    // Add hover effect
+                    resizeHandle.on('mouseover', function() {
+                        this.set('stroke', '#2196F3');
+                        this.set('strokeWidth', 2);
+                        this.set('evented', true);
+                        window.fabricCanvas.canvas.renderAll();
+                    });
+                    
+                    resizeHandle.on('mouseout', function() {
+                        this.set('stroke', 'transparent');
+                        this.set('strokeWidth', 8);
+                        window.fabricCanvas.canvas.renderAll();
+                    });
+                    
+                    // Handle dragging to resize row
+                    resizeHandle.on('mousedown', function(e) {
+                        if (this.get('isRowResize')) {
+                            const handle = this;
+                            let initialY = e.e.clientY;
+                            let rowIndex = this.get('rowIndex');
+                            
+                            const onMouseMove = function(e) {
+                                const deltaY = e.clientY - initialY;
+                                const newY = handle.y1 + deltaY;
+                                
+                                // Update the resize handle position
+                                handle.set({
+                                    y1: newY,
+                                    y2: newY
+                                });
+                                
+                                // Update all cells in this and subsequent rows
+                                updateRowHeight(rowIndex, deltaY, component.id);
+                                
+                                initialY = e.clientY;
+                                window.fabricCanvas.canvas.renderAll();
+                            };
+                            
+                            const onMouseUp = function() {
+                                $(document).off('mousemove', onMouseMove);
+                                $(document).off('mouseup', onMouseUp);
+                                window.fabricCanvas.canvas.renderAll();
+                            };
+                            
+                            $(document).on('mousemove', onMouseMove);
+                            $(document).on('mouseup', onMouseUp);
+                        }
+                    });
+                    
+                    window.fabricCanvas.canvas.add(resizeHandle);
+                    window.fabricCanvas.canvas.bringToFront(resizeHandle);
+                }
+                
+                // Prevent browser context menu on canvas
+                window.fabricCanvas.canvas.wrapperEl.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+                
+                // Render all cells on the canvas
+                window.fabricCanvas.canvas.renderAll();
+                
+                console.log('Table created with', (numRows + 1), 'rows and', numColumns, 'columns');
+                console.log('Cells added to canvas separately');
+                
+                // Return null since cells are on canvas directly
+                return null;
+            }
+
+            async function addComponentToCanvas(component) {
                 try {
                     let fabricObject;
                     
@@ -2477,6 +4009,44 @@
                                 visible: component.properties?.visible !== false
                             });
                             break;
+                        case 'table':
+                            // Phase 7: Load ExcelTable from saved data
+                            if (typeof ExcelTable !== 'undefined') {
+                                // Parse properties
+                                let tableProps = {};
+                                if (component.properties) {
+                                    if (typeof component.properties === 'string') {
+                                        tableProps = JSON.parse(component.properties);
+                                    } else {
+                                        tableProps = component.properties;
+                                    }
+                                }
+                                
+                                // Create ExcelTable instance
+                                const excelTable = new ExcelTable({
+                                    id: component.id,
+                                    position: { x: component.positionX, y: component.positionY },
+                                    columns: tableProps.columns || 5,
+                                    rows: tableProps.rows || 10,
+                                    cellWidth: tableProps.cellWidth || 120,
+                                    cellHeight: tableProps.cellHeight || 24,
+                                    columnWidths: tableProps.columnWidths,
+                                    rowHeights: tableProps.rowHeights,
+                                    data: tableProps.data
+                                });
+                                
+                                // Store reference globally
+                                if (!window.excelTables) {
+                                    window.excelTables = {};
+                                }
+                                window.excelTables[component.id] = excelTable;
+                                
+                                console.log('Excel table loaded:', component.id);
+                                return; // Don't add to Fabric canvas
+                            } else {
+                                console.error('ExcelTable class not loaded');
+                            }
+                            return;
                         default:
                             console.warn('Unknown component type:', component.componentType);
                             return;
@@ -2493,6 +4063,21 @@
                     
                     // Add to canvas
                     window.fabricCanvas.canvas.add(fabricObject);
+                    
+                    // Add tooltip functionality to loaded components
+                    const tooltipText = getTooltipText(component.componentType);
+                    if (tooltipText) {
+                        fabricObject.set('tooltip', tooltipText);
+                        fabricObject.on('mouseover', function(e) {
+                            if (this.tooltip) {
+                                showTooltip(e.e, this.tooltip);
+                            }
+                        });
+                        fabricObject.on('mouseout', function(e) {
+                            hideTooltip();
+                        });
+                    }
+                    
                     window.fabricCanvas.canvas.renderAll();
                     
                 } catch (error) {
@@ -2621,6 +4206,33 @@
                         });
                     }
                 });
+                
+                // Phase 7: Also extract ExcelTable data
+                if (window.excelTables) {
+                    for (const [tableId, excelTable] of Object.entries(window.excelTables)) {
+                        const tableData = excelTable.serialize();
+                        components.push({
+                            id: tableId,
+                            componentType: 'table',
+                            positionX: tableData.position.x,
+                            positionY: tableData.position.y,
+                            width: tableData.columns * tableData.cellWidth,
+                            height: tableData.rows * tableData.cellHeight,
+                            properties: JSON.stringify({
+                                columns: tableData.columns,
+                                rows: tableData.rows,
+                                cellWidth: tableData.cellWidth,
+                                cellHeight: tableData.cellHeight,
+                                columnWidths: tableData.columnWidths,
+                                rowHeights: tableData.rowHeights,
+                                data: tableData.data
+                            }),
+                            dataBinding: null,
+                            zIndex: 0,
+                            isVisible: true
+                        });
+                    }
+                }
                 
                 return components;
             }
@@ -3264,6 +4876,72 @@
             setupCanvasDragAndDrop();
         }); // End of $(document).ready
 
+        function getTooltipText(componentType) {
+            const tooltips = {
+                'textbox': 'Text Box',
+                'label': 'Label',
+                'image': 'Image',
+                'list': 'List',
+                'subreport': 'Subreport',
+                'group': 'Group',
+                'panel': 'Panel',
+                'pagebreak': 'Page Break',
+                'spacer': 'Spacer',
+                'rectangle': 'Rectangle',
+                'line': 'Line',
+                'table': 'Table',
+                'chart': 'Chart',
+                'checkbox': 'Checkbox',
+                'richtext': 'Rich Text',
+                'picturebox': 'Picture Box',
+                'shape': 'Shape',
+                'barcode': 'Barcode',
+                'gauge': 'Gauge',
+                'sparkline': 'Sparkline',
+                'pivotgrid': 'Pivot Grid',
+                'tableofcontents': 'Table of Contents',
+                'pageinfo': 'Page Info',
+                'crossbandline': 'Cross Band Line',
+                'crossbandbox': 'Cross Band Box'
+            };
+            return tooltips[componentType] || 'Component';
+        }
+
+        // Tooltip functions
+        function showTooltip(event, text) {
+            // Remove existing tooltip
+            hideTooltip();
+            
+            // Create tooltip element
+            const tooltip = document.createElement('div');
+            tooltip.id = 'canvas-tooltip';
+            tooltip.textContent = text;
+            tooltip.style.cssText = `
+                position: absolute;
+                background: #333;
+                color: white;
+                padding: 5px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                z-index: 1000;
+                pointer-events: none;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            `;
+            
+            // Position tooltip
+            tooltip.style.left = (event.clientX + 10) + 'px';
+            tooltip.style.top = (event.clientY - 30) + 'px';
+            
+            document.body.appendChild(tooltip);
+        }
+        
+        function hideTooltip() {
+            const tooltip = document.getElementById('canvas-tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        }
+
         // Global functions
         function enableSaveButton() {
             console.log('Enabling save button');
@@ -3311,5 +4989,428 @@
                 alert('HTML export functionality will be implemented in Phase 6');
             }
         };
+
+        // Parameter Management Functions
+        function showAddParameterModal(reportId) {
+            $('#parameterModalTitle').text('Add Parameter');
+            $('#parameterForm')[0].reset();
+            $('#parameterForm').attr('data-param-id', '');
+            $('#parameterForm').attr('data-report-id', reportId);
+            $('#parameterModal').modal('show');
+        }
+
+        function showEditParameterModal(param) {
+            $('#parameterModalTitle').text('Edit Parameter');
+            $('#parameterName').val(param.parameterName);
+            $('#parameterType').val(param.parameterType);
+            $('#parameterPrompt').val(param.prompt || '');
+            $('#parameterDefault').val(param.defaultValue || '');
+            $('#parameterRequired').prop('checked', param.required);
+            $('#parameterForm').attr('data-param-id', param.id);
+            $('#parameterModal').modal('show');
+        }
+
+        async function saveParameter(event) {
+            event.preventDefault();
+            const form = $('#parameterForm');
+            const paramId = form.attr('data-param-id');
+            const reportId = form.attr('data-report-id');
+            
+            const parameter = {
+                id: paramId || generateGuid(),
+                reportId: reportId,
+                parameterName: $('#parameterName').val(),
+                parameterType: parseInt($('#parameterType').val()),
+                prompt: $('#parameterPrompt').val(),
+                defaultValue: $('#parameterDefault').val(),
+                required: $('#parameterRequired').is(':checked'),
+                sortOrder: 0
+            };
+
+            try {
+                const response = await fetch('/Reports/Designer?handler=SaveParameter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify(parameter)
+                });
+
+                if (response.ok) {
+                    $('#parameterModal').modal('hide');
+                    showParametersPanel(); // Refresh the panel
+                } else {
+                    alert('Failed to save parameter');
+                }
+            } catch (error) {
+                console.error('Error saving parameter:', error);
+                alert('Error saving parameter: ' + error.message);
+            }
+        }
+
+        async function deleteParameter(paramId) {
+            if (!confirm('Are you sure you want to delete this parameter?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Reports/Designer?handler=DeleteParameter&parameterId=${paramId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                if (response.ok) {
+                    showParametersPanel(); // Refresh the panel
+                } else {
+                    alert('Failed to delete parameter');
+                }
+            } catch (error) {
+                console.error('Error deleting parameter:', error);
+                alert('Error deleting parameter: ' + error.message);
+            }
+        }
+
+        async function editParameter(paramId) {
+            try {
+                const response = await fetch(`/Reports/Designer?handler=GetParameter&parameterId=${paramId}`);
+                if (response.ok) {
+                    const param = await response.json();
+                    showEditParameterModal(param);
+                } else {
+                    alert('Failed to load parameter');
+                }
+            } catch (error) {
+                console.error('Error loading parameter:', error);
+                alert('Error loading parameter: ' + error.message);
+            }
+        }
+
+        // Filter Management Functions
+        async function showFiltersPanel() {
+            const reportId = window.currentReportId;
+            if (!reportId) {
+                alert('Please save the report first before adding filters');
+                return;
+            }
+
+            try {
+                // Load filters for this report
+                const filters = await loadFilters(reportId);
+                renderFiltersPanel(filters, reportId);
+            } catch (error) {
+                console.error('Error loading filters:', error);
+                alert('Error loading filters: ' + error.message);
+            }
+        }
+
+        async function loadFilters(reportId) {
+            try {
+                const response = await fetch(`/Reports/Designer?handler=GetFilters&reportId=${reportId}`);
+                if (response.ok) {
+                    return await response.json();
+                }
+                return [];
+            } catch (error) {
+                console.error('Error loading filters:', error);
+                return [];
+            }
+        }
+
+        function renderFiltersPanel(filters, reportId) {
+            const panel = $('#propertyContent');
+            panel.empty();
+            
+            let html = `
+                <div class="property-section">
+                    <h6 class="property-section-title"><i class="fas fa-filter me-2"></i>Report Filters</h6>
+                    
+                    <div class="mb-3">
+                        <button class="btn btn-primary btn-sm" onclick="showAddFilterModal('${reportId}')">
+                            <i class="fas fa-plus"></i> Add Filter
+                        </button>
+                    </div>
+                    
+                    <div id="filtersList">
+            `;
+            
+            if (filters && filters.length > 0) {
+                filters.forEach(filter => {
+                    html += renderFilterItem(filter);
+                });
+            } else {
+                html += '<div class="alert alert-info">No filters defined</div>';
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            panel.html(html);
+        }
+
+        function renderFilterItem(filter) {
+            const operatorNames = {
+                0: 'Equals', 1: 'Not Equals', 2: 'Greater Than', 3: 'Greater Than or Equal',
+                4: 'Less Than', 5: 'Less Than or Equal', 6: 'Contains', 7: 'Starts With',
+                8: 'Ends With', 9: 'Between', 10: 'In', 11: 'Not In', 12: 'Is Null', 13: 'Is Not Null'
+            };
+            
+            const logicNames = {
+                0: '', 1: 'AND', 2: 'OR'
+            };
+            
+            return `
+                <div class="card mb-2" data-filter-id="${filter.id}">
+                    <div class="card-body">
+                        <h6 class="card-title">${filter.tableName}.${filter.columnName}</h6>
+                        <p class="card-text"><small>Operator: ${operatorNames[filter.operator]}</small></p>
+                        ${filter.filterValue ? `<p class="card-text"><small>Value: ${filter.filterValue}</small></p>` : ''}
+                        <p class="card-text"><small>Logic: ${logicNames[filter.logicOperator] || 'None'}</small></p>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-secondary" onclick="editFilter('${filter.id}')">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteFilter('${filter.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showAddFilterModal(reportId) {
+            $('#filterModalTitle').text('Add Filter');
+            $('#filterForm')[0].reset();
+            $('#filterForm').attr('data-filter-id', '');
+            $('#filterForm').attr('data-report-id', reportId);
+            $('#filterModal').modal('show');
+        }
+
+        function showEditFilterModal(filter) {
+            $('#filterModalTitle').text('Edit Filter');
+            $('#filterTable').val(filter.tableName);
+            $('#filterColumn').val(filter.columnName);
+            $('#filterOperator').val(filter.operator);
+            $('#filterValue').val(filter.filterValue || '');
+            $('#filterLogic').val(filter.logicOperator);
+            $('#filterForm').attr('data-filter-id', filter.id);
+            $('#filterModal').modal('show');
+        }
+
+        async function saveFilter(event) {
+            event.preventDefault();
+            const form = $('#filterForm');
+            const filterId = form.attr('data-filter-id');
+            const reportId = form.attr('data-report-id');
+            
+            const filter = {
+                id: filterId || generateGuid(),
+                reportId: reportId,
+                tableName: $('#filterTable').val(),
+                columnName: $('#filterColumn').val(),
+                operator: parseInt($('#filterOperator').val()),
+                filterValue: $('#filterValue').val(),
+                logicOperator: parseInt($('#filterLogic').val()),
+                sortOrder: 0
+            };
+
+            try {
+                const response = await fetch('/Reports/Designer?handler=SaveFilter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify(filter)
+                });
+
+                if (response.ok) {
+                    $('#filterModal').modal('hide');
+                    showFiltersPanel(); // Refresh the panel
+                } else {
+                    alert('Failed to save filter');
+                }
+            } catch (error) {
+                console.error('Error saving filter:', error);
+                alert('Error saving filter: ' + error.message);
+            }
+        }
+
+        async function deleteFilter(filterId) {
+            if (!confirm('Are you sure you want to delete this filter?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Reports/Designer?handler=DeleteFilter&filterId=${filterId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                if (response.ok) {
+                    showFiltersPanel(); // Refresh the panel
+                } else {
+                    alert('Failed to delete filter');
+                }
+            } catch (error) {
+                console.error('Error deleting filter:', error);
+                alert('Error deleting filter: ' + error.message);
+            }
+        }
+
+        async function editFilter(filterId) {
+            try {
+                const response = await fetch(`/Reports/Designer?handler=GetFilter&filterId=${filterId}`);
+                if (response.ok) {
+                    const filter = await response.json();
+                    showEditFilterModal(filter);
+                } else {
+                    alert('Failed to load filter');
+                }
+            } catch (error) {
+                console.error('Error loading filter:', error);
+                alert('Error loading filter: ' + error.message);
+            }
+        }
+
+        // Wizard Functions
+        function startReportWizard() {
+            window.location.href = '/Reports/Wizard';
+        }
     </script>
+
+    <!-- Parameter Management Modal -->
+    <div class="modal fade" id="parameterModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="parameterModalTitle">Add Parameter</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="parameterForm" onsubmit="saveParameter(event)">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="parameterName">Parameter Name</label>
+                            <input type="text" class="form-control" id="parameterName" required 
+                                placeholder="e.g., StartDate, ProjectId" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="parameterType">Parameter Type</label>
+                            <select class="form-control" id="parameterType" required>
+                                <option value="0">Text</option>
+                                <option value="1">Integer</option>
+                                <option value="2">Decimal</option>
+                                <option value="3">DateTime</option>
+                                <option value="4">Boolean</option>
+                                <option value="5">DateRange</option>
+                                <option value="6">LookupSingle</option>
+                                <option value="7">LookupMulti</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="parameterPrompt">Prompt Text</label>
+                            <input type="text" class="form-control" id="parameterPrompt" 
+                                placeholder="e.g., Enter start date" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="parameterDefault">Default Value</label>
+                            <input type="text" class="form-control" id="parameterDefault" 
+                                placeholder="Optional default value" />
+                        </div>
+                        
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="parameterRequired" />
+                            <label class="form-check-label" for="parameterRequired">
+                                Required
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Management Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalTitle">Add Filter</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="filterForm" onsubmit="saveFilter(event)">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="filterTable">Table Name</label>
+                            <input type="text" class="form-control" id="filterTable" required 
+                                placeholder="e.g., Projects, Expenses" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="filterColumn">Column Name</label>
+                            <input type="text" class="form-control" id="filterColumn" required 
+                                placeholder="e.g., ProjectName, Amount" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="filterOperator">Operator</label>
+                            <select class="form-control" id="filterOperator" required>
+                                <option value="0">Equals</option>
+                                <option value="1">Not Equals</option>
+                                <option value="2">Greater Than</option>
+                                <option value="3">Greater Than or Equal</option>
+                                <option value="4">Less Than</option>
+                                <option value="5">Less Than or Equal</option>
+                                <option value="6">Contains</option>
+                                <option value="7">Starts With</option>
+                                <option value="8">Ends With</option>
+                                <option value="9">Between</option>
+                                <option value="10">In</option>
+                                <option value="11">Not In</option>
+                                <option value="12">Is Null</option>
+                                <option value="13">Is Not Null</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="filterValueGroup">
+                            <label for="filterValue">Filter Value</label>
+                            <input type="text" class="form-control" id="filterValue" 
+                                placeholder="Enter filter value" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="filterLogic">Logic Operator</label>
+                            <select class="form-control" id="filterLogic">
+                                <option value="0">None (First Filter)</option>
+                                <option value="1">AND</option>
+                                <option value="2">OR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 }

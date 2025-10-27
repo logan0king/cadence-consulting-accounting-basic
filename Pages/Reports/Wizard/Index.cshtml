@@ -1,0 +1,422 @@
+@page "/Reports/Wizard"
+@model CadenceAccounting.Pages.Reports.Wizard.IndexModel
+@{
+    ViewData["Title"] = "Report Wizard";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="fas fa-magic"></i> Report Wizard</h2>
+            <p class="text-muted">Create a new report using our guided wizard</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="wizard-container">
+                <div class="wizard-header">
+                    <div class="wizard-steps">
+                        <div class="step" id="step1" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-title">Template</span>
+                        </div>
+                        <div class="step" id="step2" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-title">Data Source</span>
+                        </div>
+                        <div class="step" id="step3" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-title">Fields</span>
+                        </div>
+                        <div class="step" id="step4" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-title">Layout</span>
+                        </div>
+                        <div class="step" id="step5" data-step="5">
+                            <span class="step-number">5</span>
+                            <span class="step-title">Preview</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-content" id="wizardContent">
+                    <!-- Step 1: Template Selection -->
+                    <div id="stepContent1" class="step-content">
+                        <h4>Select Report Template</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card template-card" data-template="invoice">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-file-invoice fa-4x mb-3"></i>
+                                        <h5>Invoice</h5>
+                                        <p class="text-muted">Create invoices for projects</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card template-card" data-template="statement">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-file-alt fa-4x mb-3"></i>
+                                        <h5>Statement</h5>
+                                        <p class="text-muted">Generate account statements</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card template-card" data-template="summary">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-chart-line fa-4x mb-3"></i>
+                                        <h5>Summary</h5>
+                                        <p class="text-muted">Generate summary reports</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Data Source -->
+                    <div id="stepContent2" class="step-content" style="display: none;">
+                        <h4>Select Data Source</h4>
+                        <div class="form-group">
+                            <label>Choose your data source:</label>
+                            <select class="form-control" id="dataSourceSelect">
+                                <option value="">-- Select Data Source --</option>
+                                <option value="Projects">Projects</option>
+                                <option value="TimeEntries">Time Entries</option>
+                                <option value="Expenses">Expenses</option>
+                                <option value="Invoices">Invoices</option>
+                                <option value="Clients">Clients</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Fields -->
+                    <div id="stepContent3" class="step-content" style="display: none;">
+                        <h4>Select Fields</h4>
+                        <div id="fieldsChecklist">
+                            <!-- Fields will be loaded dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Layout -->
+                    <div id="stepContent4" class="step-content" style="display: none;">
+                        <h4>Report Layout</h4>
+                        <div class="form-group">
+                            <label>Report Title</label>
+                            <input type="text" class="form-control" id="reportTitle" placeholder="Enter report title" />
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control" id="reportDescription" rows="3" placeholder="Enter report description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Report Group</label>
+                            <input type="text" class="form-control" id="reportGroup" placeholder="e.g., General, Financial" />
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Preview -->
+                    <div id="stepContent5" class="step-content" style="display: none;">
+                        <h4>Preview Report</h4>
+                        <div id="reportPreview" class="alert alert-info">
+                            Report preview will be displayed here
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-actions">
+                    <button class="btn btn-secondary" id="btnBack" onclick="goToPreviousStep()" disabled>
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn btn-primary" id="btnNext" onclick="goToNextStep()">
+                        Next <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .wizard-container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .wizard-header {
+        margin-bottom: 30px;
+    }
+
+    .wizard-steps {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+        padding: 10px;
+    }
+
+    .step.active .step-number {
+        background: #007bff;
+        color: white;
+    }
+
+    .step.completed .step-number {
+        background: #28a745;
+        color: white;
+    }
+
+    .step-number {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e9ecef;
+        line-height: 40px;
+        font-weight: bold;
+    }
+
+    .step-title {
+        display: block;
+        margin-top: 5px;
+        font-size: 12px;
+    }
+
+    .template-card {
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .template-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .template-card.selected {
+        border: 2px solid #007bff;
+    }
+
+    .wizard-actions {
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-between;
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+    let currentStep = 1;
+    const maxSteps = 5;
+    let wizardData = {
+        template: '',
+        dataSource: '',
+        fields: [],
+        title: '',
+        description: '',
+        group: ''
+    };
+
+    function goToNextStep() {
+        if (currentStep < maxSteps) {
+            // Save data first, then validate
+            saveStepData();
+            console.log('Data saved, wizardData:', wizardData);
+            
+            if (validateCurrentStep()) {
+                currentStep++;
+                updateUI();
+            } else {
+                console.log('Validation failed for step:', currentStep);
+            }
+        } else {
+            createReport();
+        }
+    }
+
+    function goToPreviousStep() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateUI();
+        }
+    }
+
+    function validateCurrentStep() {
+        console.log('Validating step:', currentStep);
+        let result = false;
+        
+        switch(currentStep) {
+            case 1:
+                result = wizardData.template !== '';
+                console.log('Step 1 validation:', result, 'template:', wizardData.template);
+                break;
+            case 2:
+                const selectedDataSource = $('#dataSourceSelect').val();
+                wizardData.dataSource = selectedDataSource;
+                result = wizardData.dataSource !== '';
+                console.log('Step 2 validation:', result, 'dataSource:', wizardData.dataSource);
+                break;
+            case 3:
+                result = wizardData.fields.length > 0;
+                console.log('Step 3 validation:', result, 'fields:', wizardData.fields);
+                break;
+            case 4:
+                result = wizardData.title !== '';
+                console.log('Step 4 validation:', result, 'title:', wizardData.title);
+                break;
+            default:
+                result = true;
+                break;
+        }
+        
+        console.log('Validation result:', result);
+        return result;
+    }
+
+    function saveStepData() {
+        switch(currentStep) {
+            case 1:
+                const selectedTemplate = $('.template-card.selected').data('template');
+                if (selectedTemplate) {
+                    wizardData.template = selectedTemplate;
+                }
+                console.log('Wizard data after step 1:', wizardData);
+                break;
+            case 2:
+                wizardData.dataSource = $('#dataSourceSelect').val();
+                loadFields();
+                break;
+            case 3:
+                wizardData.fields = [];
+                const checkedFields = $('.field-check:checked');
+                console.log('Found checked fields:', checkedFields.length);
+                checkedFields.each(function() {
+                    wizardData.fields.push($(this).val());
+                });
+                console.log('Saved fields:', wizardData.fields);
+                break;
+            case 4:
+                wizardData.title = $('#reportTitle').val();
+                wizardData.description = $('#reportDescription').val();
+                wizardData.group = $('#reportGroup').val();
+                break;
+        }
+    }
+
+    function updateUI() {
+        // Update step indicators
+        for (let i = 1; i <= maxSteps; i++) {
+            const step = $('#step' + i);
+            if (i < currentStep) {
+                step.addClass('completed').removeClass('active');
+            } else if (i === currentStep) {
+                step.addClass('active').removeClass('completed');
+            } else {
+                step.removeClass('active completed');
+            }
+        }
+
+        // Show/hide content
+        for (let i = 1; i <= maxSteps; i++) {
+            const content = $('#stepContent' + i);
+            if (i === currentStep) {
+                content.show();
+            } else {
+                content.hide();
+            }
+        }
+
+        // Update buttons
+        $('#btnBack').prop('disabled', currentStep === 1);
+        if (currentStep === maxSteps) {
+            $('#btnNext').html('<i class="fas fa-check"></i> Create Report');
+        } else {
+            $('#btnNext').html('Next <i class="fas fa-arrow-right"></i>');
+        }
+    }
+
+    function loadFields() {
+        // Load fields based on data source
+        const dataSource = wizardData.dataSource;
+        const fieldsList = $('#fieldsChecklist');
+        fieldsList.empty();
+
+        // Sample fields - in real implementation, fetch from database
+        const sampleFields = {
+            Projects: ['ProjectName', 'Budget', 'StartDate', 'EndDate', 'Status'],
+            TimeEntries: ['Date', 'Hours', 'Description', 'Rate', 'Amount'],
+            Expenses: ['Date', 'Category', 'Amount', 'Description', 'IsBillable'],
+            Invoices: ['InvoiceNumber', 'InvoiceDate', 'DueDate', 'Subtotal', 'TotalAmount'],
+            Clients: ['ClientName', 'Contact', 'Email', 'Phone', 'Address']
+        };
+
+        const fields = sampleFields[dataSource] || [];
+        fields.forEach(field => {
+            fieldsList.append(`
+                <div class="form-check">
+                    <input class="form-check-input field-check" type="checkbox" value="${field}" id="field_${field}">
+                    <label class="form-check-label" for="field_${field}">
+                        ${field}
+                    </label>
+                </div>
+            `);
+        });
+    }
+
+    async function createReport() {
+        // Create report via wizard
+        try {
+            console.log('Creating report with data:', wizardData);
+            
+            // Get the anti-forgery token
+            const token = $('input[name="__RequestVerificationToken"]').val() || '';
+            console.log('Anti-forgery token:', token ? 'Found' : 'Not found');
+            
+            const response = await fetch('/api/ReportWizard/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(wizardData)
+            });
+
+            console.log('Response status:', response.status);
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Report created:', result);
+                window.location.href = `/Reports/Designer?reportId=${result.reportId}`;
+            } else {
+                const errorText = await response.text();
+                console.error('Failed to create report:', errorText);
+                alert('Failed to create report: ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error creating report:', error);
+            alert('Error creating report: ' + error.message);
+        }
+    }
+
+    // Initialize
+    $(document).ready(function() {
+        updateUI();
+        
+        // Template selection - bind inside ready
+        $('.template-card').click(function() {
+            $('.template-card').removeClass('selected');
+            $(this).addClass('selected');
+            wizardData.template = $(this).data('template');
+            console.log('Template selected:', wizardData.template);
+            console.log('Wizard data:', wizardData);
+        });
+    });
+</script>
+}

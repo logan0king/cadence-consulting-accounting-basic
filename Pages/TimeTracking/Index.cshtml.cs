@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 namespace CadenceAccounting.Pages.TimeTracking
 {
     [Authorize]
-    [IgnoreAntiforgeryToken]
     public class IndexModel : PageModel
     {
         private readonly ITimeEntryService _timeEntryService;

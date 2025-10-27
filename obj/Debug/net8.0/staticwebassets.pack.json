@@ -1,6 +1,10 @@
 {
   "Files": [
     {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\excel-table.css",
+      "PackagePath": "staticwebassets\\css\\excel-table.css"
+    },
+    {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\report-designer.css",
       "PackagePath": "staticwebassets\\css\\report-designer.css"
     },
@@ -11,6 +15,10 @@
     {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\themes\\journal.css",
       "PackagePath": "staticwebassets\\css\\themes\\journal.css"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\excel-table.js",
+      "PackagePath": "staticwebassets\\js\\excel-table.js"
     },
     {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\report-designer\\chart-manager.js",
@@ -51,6 +59,14 @@
     {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\lib\\fabric.min.js",
       "PackagePath": "staticwebassets\\lib\\fabric.min.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\lib\\jquery-ui.css",
+      "PackagePath": "staticwebassets\\lib\\jquery-ui.css"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\lib\\jquery-ui.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-ui.min.js"
     },
     {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.CadenceAccounting.Microsoft.AspNetCore.StaticWebAssets.props",

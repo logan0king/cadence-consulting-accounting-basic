@@ -485,6 +485,8 @@ namespace CadenceAccounting.Models
         
         public bool IsTemplate { get; set; } = false;
         
+        public string? CanvasData { get; set; } // JSON: { width, height, zoom }
+        
         [Required]
         public Guid CreatedBy { get; set; }
         
@@ -645,24 +647,52 @@ namespace CadenceAccounting.Models
         
         [Required]
         [StringLength(100)]
-        public string FieldName { get; set; } = string.Empty;
+        public string TableName { get; set; } = string.Empty;
         
         [Required]
-        [StringLength(20)]
-        public string Operator { get; set; } = string.Empty; // =, <>, >, <, LIKE, etc.
+        [StringLength(100)]
+        public string ColumnName { get; set; } = string.Empty;
+        
+        public FilterOperator Operator { get; set; }
         
         [StringLength(500)]
         public string? FilterValue { get; set; }
         
-        [StringLength(50)]
-        public string? DataType { get; set; }
+        public LogicOperator? LogicOperator { get; set; }
         
-        public bool IsActive { get; set; } = true;
+        public int SortOrder { get; set; }
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        
         // Navigation properties
         public virtual ReportDefinition Report { get; set; } = null!;
+    }
+    
+    public enum FilterOperator
+    {
+        Equals,
+        NotEquals,
+        GreaterThan,
+        GreaterThanOrEqual,
+        LessThan,
+        LessThanOrEqual,
+        Contains,
+        StartsWith,
+        EndsWith,
+        Between,
+        In,
+        NotIn,
+        IsNull,
+        IsNotNull
+    }
+    
+    public enum LogicOperator
+    {
+        None,
+        And,
+        Or
     }
     
     public class ReportExecution
@@ -691,5 +721,78 @@ namespace CadenceAccounting.Models
         // Navigation properties
         public virtual ReportDefinition Report { get; set; } = null!;
         public virtual User ExecutedByUser { get; set; } = null!;
+    }
+    
+    // Report Parameter Models
+    public class ReportParameter
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public Guid ReportId { get; set; }
+        
+        [Required]
+        [StringLength(100)]
+        public string ParameterName { get; set; } = string.Empty;
+        
+        [Required]
+        public ParameterType ParameterType { get; set; }
+        
+        [StringLength(500)]
+        public string? Prompt { get; set; }
+        
+        public string? DefaultValue { get; set; }
+        
+        public bool Required { get; set; }
+        
+        // For lookup parameters
+        public string? LookupSource { get; set; }
+        
+        [StringLength(100)]
+        public string? DisplayField { get; set; }
+        
+        [StringLength(100)]
+        public string? ValueField { get; set; }
+        
+        public int SortOrder { get; set; }
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        
+        // Navigation properties
+        public virtual ReportDefinition Report { get; set; } = null!;
+        public virtual ICollection<ReportParameterOption> Options { get; set; } = new List<ReportParameterOption>();
+    }
+    
+    public enum ParameterType
+    {
+        Text,
+        Integer,
+        Decimal,
+        DateTime,
+        Boolean,
+        DateRange,
+        LookupSingle,
+        LookupMulti
+    }
+    
+    public class ReportParameterOption
+    {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        
+        [Required]
+        public Guid ParameterId { get; set; }
+        
+        [StringLength(200)]
+        public string? DisplayValue { get; set; }
+        
+        [StringLength(200)]
+        public string? ActualValue { get; set; }
+        
+        public int SortOrder { get; set; }
+        
+        // Navigation properties
+        public virtual ReportParameter Parameter { get; set; } = null!;
     }
 }

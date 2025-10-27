@@ -107,7 +107,8 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post">
+            <form method="post" id="timeEntryForm">
+                @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -161,8 +162,9 @@
                     </div>
                     
                     <div class="mb-3 form-check">
-                        <input name="Input.IsBillable" type="checkbox" class="form-check-input" @(Model.Input.IsBillable ? "checked" : "") />
-                        <label for="Input.IsBillable" class="form-check-label">Billable</label>
+                        <input name="Input.IsBillable" type="checkbox" class="form-check-input" value="true" checked />
+                        <input name="Input.IsBillable" type="hidden" value="false" />
+                        <label class="form-check-label">Billable</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -206,6 +208,49 @@
 
             // Initialize amount calculation
             calculateAmount();
+
+            // Handle form submission
+            $('#timeEntryForm').on('submit', function(e) {
+                console.log('Form submit button clicked');
+                console.log('Form action:', $(this).attr('action'));
+                console.log('Form method:', $(this).attr('method'));
+                
+                // Check form validation
+                var projectId = $('#projectSelect').val();
+                var hours = $('input[name="Input.Hours"]').val();
+                var rate = $('input[name="Input.Rate"]').val();
+                
+                console.log('Form values:', {
+                    projectId: projectId,
+                    hours: hours,
+                    rate: rate
+                });
+                
+                if (!projectId) {
+                    console.log('STOPPING: No project selected');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert('Please select a project');
+                    return false;
+                }
+                else {
+                    console.log('Project selected:', projectId);
+                }
+                
+                if (!hours || parseFloat(hours) <= 0) {
+                    e.preventDefault();
+                    alert('Please enter hours greater than 0');
+                    return false;
+                }
+                
+                if (!rate || parseFloat(rate) <= 0) {
+                    e.preventDefault();
+                    alert('Please enter a rate greater than 0');
+                    return false;
+                }
+                
+                console.log('Form submitting...');
+            });
         });
     </script>
 }

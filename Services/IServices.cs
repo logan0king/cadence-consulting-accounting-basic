@@ -106,4 +106,14 @@ namespace CadenceAccounting.Services
         Task<IEnumerable<AuditLog>> GetAuditLogsByUserAsync(Guid userId, DateTime? startDate = null, DateTime? endDate = null);
         Task<byte[]> ExportAuditLogsAsync(DateTime startDate, DateTime endDate);
     }
+
+    public interface IReportParameterService
+    {
+        Task<List<ReportParameter>> GetParametersAsync(Guid reportId);
+        Task<ReportParameter?> GetParameterAsync(Guid parameterId);
+        Task<ReportParameter> SaveParameterAsync(ReportParameter parameter);
+        Task DeleteParameterAsync(Guid parameterId);
+        Task<Dictionary<string, object>> CollectParametersAsync(Guid reportId, HttpRequest request);
+        Task<string> ApplyParametersToSqlAsync(Guid reportId, string sql, Dictionary<string, object> parameters);
+    }
 }

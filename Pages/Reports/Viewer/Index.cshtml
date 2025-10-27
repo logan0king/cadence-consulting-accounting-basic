@@ -1,0 +1,84 @@
+@page "/Reports/Viewer"
+@model CadenceAccounting.Pages.Reports.Viewer.IndexModel
+@{
+    ViewData["Title"] = $"View Report - {Model.Report?.Title}";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="fas fa-chart-bar"></i> @Model.Report?.Title</h2>
+            @if (!string.IsNullOrEmpty(Model.Report?.Description))
+            {
+                <p class="text-muted">@Model.Report?.Description</p>
+            }
+        </div>
+    </div>
+    
+    @if (!string.IsNullOrEmpty(TempData["ErrorMessage"] as string))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                </div>
+            </div>
+        </div>
+    }
+    
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Report Results</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.ReportData != null && Model.ReportData.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        @foreach (var key in Model.ReportData[0].Keys)
+                                        {
+                                            <th>@key</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in Model.ReportData)
+                                    {
+                                        <tr>
+                                            @foreach (var value in row.Values)
+                                            {
+                                                <td>@value</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No data available
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <div class="col-12">
+            <a href="/Reports/Designer?reportId=@Model.Report?.Id" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Report
+            </a>
+            <a href="/Reports/Manage" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Back to Reports
+            </a>
+        </div>
+    </div>
+</div>
+
