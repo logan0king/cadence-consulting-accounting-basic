@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "s0O9bth9e23f6oSF++D+JT2uZ4kbUw5gqdwuiERnJWI=",
+  "Hash": "vqaaHB14oehQz/33kYH/trc0kvNSo5zr8NDgYcthlKU=",
   "Source": "CadenceAccounting",
   "BasePath": "_content/CadenceAccounting",
   "Mode": "Default",
@@ -16,6 +16,25 @@
     }
   ],
   "Assets": [
+    {
+      "Identity": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\charts.css",
+      "SourceId": "CadenceAccounting",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\",
+      "BasePath": "_content/CadenceAccounting",
+      "RelativePath": "css/charts.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\charts.css"
+    },
     {
       "Identity": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\excel-table.css",
       "SourceId": "CadenceAccounting",
@@ -91,6 +110,44 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\css\\themes\\journal.css"
+    },
+    {
+      "Identity": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\bar-chart.js",
+      "SourceId": "CadenceAccounting",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\",
+      "BasePath": "_content/CadenceAccounting",
+      "RelativePath": "js/charts/bar-chart.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\charts\\bar-chart.js"
+    },
+    {
+      "Identity": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\chart-base.js",
+      "SourceId": "CadenceAccounting",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\",
+      "BasePath": "_content/CadenceAccounting",
+      "RelativePath": "js/charts/chart-base.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\charts\\chart-base.js"
     },
     {
       "Identity": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\excel-table.js",

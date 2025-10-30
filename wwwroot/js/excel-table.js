@@ -43,6 +43,8 @@ class ExcelTable {
         this.columnWidths = options.columnWidths || new Array(this.numColumns).fill(this.cellWidth);
         this.rowHeights = options.rowHeights || new Array(this.numRows).fill(this.cellHeight);
         this.resizing = false; // Track if currently resizing
+        // Data-binding state (MVP)
+        this.lastQuery = options.lastQuery || null;
         
         // Initialize
         this.render();
@@ -627,6 +629,10 @@ class ExcelTable {
         
         // Build menu items
         const menuItems = [];
+
+        // Data binding (MVP)
+        menuItems.push({ text: '🔗 Get Data (SQL)...', action: () => this.showGetDataDialog() });
+        menuItems.push({ text: '---', separator: true });
         
         // Formatting options (Phase 5)
         menuItems.push({ text: '📝 Format Cell...', action: () => this.showFormatDialog(row, col) });
@@ -677,6 +683,271 @@ class ExcelTable {
         setTimeout(() => {
             document.addEventListener('click', this.hideContextMenu.bind(this), { once: true });
         }, 0);
+    }
+
+    /**
+     * Show simple Get Data dialog (SQL only, MVP)
+     */
+    showGetDataDialog() {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,.45);
+            z-index: 10002; display: flex; align-items: center; justify-content: center;
+        `;
+
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            width: 640px; max-width: 90vw; background: #fff; border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.25); padding: 16px; font-family: Segoe UI, Arial;
+        `;
+        dialog.innerHTML = `
+            <h3 style="margin: 0 0 8px 0;">Get Data (SQL)</h3>
+            <div style="margin-bottom: 8px; color: #555; font-size: 12px;">
+              Only SELECT is allowed. Preview limited to 100 rows.
+            </div>
+            <div style="display:flex; gap:12px;">
+              <div style="flex:1;">
+                <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+                  <strong>Builder</strong>
+                  <button id="gd-load-schema" style="padding:4px 8px; border:1px solid #ccc; background:#f8f9fa; border-radius:4px;">Load Schema</button>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                  <div>
+                    <label style="font-size:12px; color:#333;">Table</label>
+                    <select id="gd-table" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;">
+                      <option value="">-- select --</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:12px; color:#333;">Columns</label>
+                    <div id="gd-columns" style="height:120px; overflow:auto; border:1px solid #ddd; border-radius:4px; padding:6px; background:#fff;"></div>
+                  </div>
+                </div>
+                <div style="margin-top:8px;">
+                  <button id="gd-generate" style="padding:6px 10px; border:none; background:#6c757d; color:#fff; border-radius:4px;">Generate SQL</button>
+                </div>
+              </div>
+              <div style="flex:1;">
+                <label style="display:block; font-weight:bold; margin-bottom:4px;">SQL</label>
+                <textarea id="gd-sql" style="width:100%; height:220px; font-family: Consolas, monospace; font-size:12px; padding:8px; border:1px solid #ddd; border-radius:4px;" placeholder="SELECT ..."></textarea>
+              </div>
+            </div>
+            <div id="gd-error" style="margin-top:8px; color:#b00020; display:none;"></div>
+            <div id="gd-preview" style="margin-top:12px; max-height:240px; overflow:auto; border:1px solid #eee; display:none;"></div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+              <button id="gd-cancel" style="padding:6px 12px; border:1px solid #ccc; background:#f5f5f5; border-radius:4px;">Cancel</button>
+              <button id="gd-preview-btn" style="padding:6px 12px; border:none; background:#0d6efd; color:#fff; border-radius:4px;">Preview</button>
+              <button id="gd-bind" style="padding:6px 12px; border:none; background:#198754; color:#fff; border-radius:4px; display:none;">Bind to Table</button>
+            </div>
+        `;
+
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+
+        const $sql = dialog.querySelector('#gd-sql');
+        const $err = dialog.querySelector('#gd-error');
+        const $prev = dialog.querySelector('#gd-preview');
+        const $btnPrev = dialog.querySelector('#gd-preview-btn');
+        const $btnBind = dialog.querySelector('#gd-bind');
+        const $btnCancel = dialog.querySelector('#gd-cancel');
+        const $loadSchema = dialog.querySelector('#gd-load-schema');
+        const $table = dialog.querySelector('#gd-table');
+        const $columns = dialog.querySelector('#gd-columns');
+        const $generate = dialog.querySelector('#gd-generate');
+
+        let lastPreview = { columns: [], rows: [] };
+        let schemaItems = [];
+
+        const close = () => { document.body.removeChild(overlay); };
+
+        $btnCancel.addEventListener('click', close);
+
+        $loadSchema.addEventListener('click', async () => {
+            $columns.innerHTML = '';
+            $table.innerHTML = '<option value="">-- select --</option>';
+            try {
+                const res = await fetch('/api/ReportWizard/data/schema');
+                const json = await res.json();
+                if (!json.success) throw new Error(json.error || 'Failed to load schema');
+                schemaItems = json.items || [];
+                schemaItems.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = `${item.schema}.${item.table}`;
+                    opt.textContent = `${item.schema}.${item.table}`;
+                    $table.appendChild(opt);
+                });
+            } catch (err) {
+                $err.textContent = (err && err.message) ? err.message : 'Unknown error';
+                $err.style.display = 'block';
+            }
+        });
+
+        $table.addEventListener('change', () => {
+            $columns.innerHTML = '';
+            const v = $table.value;
+            if (!v) return;
+            const item = schemaItems.find(i => `${i.schema}.${i.table}` === v);
+            if (!item) return;
+            item.columns.forEach(col => {
+                const id = `col_${item.schema}_${item.table}_${col.name}`;
+                const wrap = document.createElement('div');
+                wrap.style.marginBottom = '4px';
+                wrap.innerHTML = `<label style="font-size:12px; display:flex; gap:6px; align-items:center;"><input type="checkbox" id="${id}" data-col="${col.name}"> <span>${col.name} <span style=\"color:#888;\">(${col.dataType})</span></span></label>`;
+                $columns.appendChild(wrap);
+            });
+        });
+
+        $generate.addEventListener('click', () => {
+            $err.style.display = 'none';
+            const v = $table.value;
+            if (!v) {
+                $err.textContent = 'Select a table.';
+                $err.style.display = 'block';
+                return;
+            }
+            const checked = Array.from($columns.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(i => i.getAttribute('data-col'));
+            const colsSql = checked.length > 0 ? checked.map(c => `[${c}]`).join(', ') : '*';
+            const [schema, table] = v.split('.');
+            const tableSql = `[${schema}].[${table}]`;
+            $sql.value = `SELECT ${colsSql} FROM ${tableSql}`;
+        });
+
+        $btnPrev.addEventListener('click', async () => {
+            $err.style.display = 'none';
+            $err.textContent = '';
+            $prev.style.display = 'none';
+            $prev.innerHTML = '';
+            $btnBind.style.display = 'none';
+
+            const sql = ($sql.value || '').trim();
+            if (!sql.toLowerCase().startsWith('select')) {
+                $err.textContent = 'Only SELECT statements are allowed.';
+                $err.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/ReportWizard/data/preview-sql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sql, maxRows: 100 })
+                });
+                const json = await res.json();
+                if (!json.success) {
+                    throw new Error(json.error || 'Preview failed');
+                }
+
+                lastPreview = { columns: json.columns || [], rows: json.rows || [] };
+                // Keep the SQL used for preview as the binding candidate
+                this.lastQuery = sql;
+
+                // Render a light preview table
+                const tbl = document.createElement('table');
+                tbl.style.cssText = 'width:100%; border-collapse: collapse; font-size:12px;';
+                const thead = document.createElement('thead');
+                const trh = document.createElement('tr');
+                lastPreview.columns.forEach(c => {
+                    const th = document.createElement('th');
+                    th.textContent = c;
+                    th.style.cssText = 'text-align:left; border-bottom:1px solid #ddd; padding:4px; position:sticky; top:0; background:#fafafa;';
+                    trh.appendChild(th);
+                });
+                thead.appendChild(trh);
+                tbl.appendChild(thead);
+                const tbody = document.createElement('tbody');
+                lastPreview.rows.forEach(r => {
+                    const tr = document.createElement('tr');
+                    r.forEach(v => {
+                        const td = document.createElement('td');
+                        td.textContent = v == null ? '' : String(v);
+                        td.style.cssText = 'border-bottom:1px solid #f0f0f0; padding:4px;';
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                tbl.appendChild(tbody);
+
+                $prev.innerHTML = '';
+                $prev.appendChild(tbl);
+                $prev.style.display = 'block';
+                $btnBind.style.display = 'inline-block';
+            } catch (err) {
+                $err.textContent = (err && err.message) ? err.message : 'Unknown error';
+                $err.style.display = 'block';
+            }
+        });
+
+        $btnBind.addEventListener('click', () => {
+            this.bindPreviewToTable(lastPreview);
+            close();
+        });
+    }
+
+    /**
+     * Bind preview result to the current table (reset shape)
+     */
+    bindPreviewToTable(preview) {
+        if (!preview || !Array.isArray(preview.rows)) return;
+
+        const rows = preview.rows;
+        const cols = preview.columns || (rows[0] ? rows[0].map((_, i) => 'Col' + (i + 1)) : []);
+
+        // Resize table shape
+        this.numRows = rows.length > 0 ? rows.length : 1;
+        this.numColumns = cols.length > 0 ? cols.length : 1;
+
+        // Build data model from rows
+        const newData = [];
+        for (let r = 0; r < this.numRows; r++) {
+            const rowData = [];
+            const src = rows[r] || [];
+            for (let c = 0; c < this.numColumns; c++) {
+                const val = src[c] == null ? '' : String(src[c]);
+                rowData.push({
+                    value: val,
+                    formula: null,
+                    format: {
+                        fontSize: 11,
+                        fontFamily: 'Segoe UI, Arial, sans-serif',
+                        fontWeight: 'normal',
+                        textColor: '#000000',
+                        backgroundColor: '#FFFFFF',
+                        textAlign: 'left'
+                    },
+                    col: c,
+                    row: r,
+                    cellId: this.getCellId(c, r)
+                });
+            }
+            newData.push(rowData);
+        }
+
+        this.data = newData;
+        this.columnWidths = new Array(this.numColumns).fill(this.cellWidth);
+        this.rowHeights = new Array(this.numRows).fill(this.cellHeight);
+
+        this.rerender();
+    }
+
+    /**
+     * Refresh data by re-running the stored SQL (if any)
+     */
+    async refreshFromSql() {
+        if (!this.lastQuery) return false;
+        try {
+            const res = await fetch('/api/ReportWizard/data/preview-sql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sql: this.lastQuery, maxRows: 1000 })
+            });
+            const json = await res.json();
+            if (!json.success) return false;
+            this.bindPreviewToTable({ columns: json.columns || [], rows: json.rows || [] });
+            return true;
+        } catch (_) {
+            return false;
+        }
     }
     
     /**

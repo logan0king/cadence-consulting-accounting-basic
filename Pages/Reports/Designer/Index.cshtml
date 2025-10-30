@@ -2758,6 +2758,14 @@
                 }
 
                 try {
+                    showLoadingDialog('Refreshing data...');
+                    // Auto-refresh bound tables (SQL)
+                    if (window.excelTables) {
+                        const refreshPromises = Object.values(window.excelTables).map(t => t.refreshFromSql && t.refreshFromSql());
+                        await Promise.all(refreshPromises);
+                    }
+                    hideLoadingDialog();
+
                     showLoadingDialog('Generating preview...');
                     
                     const response = await fetch(`?handler=PreviewReport&reportId=${reportId}`);
@@ -2765,10 +2773,11 @@
                     
                     hideLoadingDialog();
                     
-                    if (result.success) {
+                    if (result.success && result.preview && result.preview.htmlContent) {
                         showReportPreviewDialog(result.preview);
                     } else {
-                        alert('Error generating preview: ' + result.error);
+                        const payload = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+                        alert('Preview returned no content. Details: ' + payload);
                     }
                 } catch (error) {
                     hideLoadingDialog();
@@ -4032,7 +4041,10 @@
                                     cellHeight: tableProps.cellHeight || 24,
                                     columnWidths: tableProps.columnWidths,
                                     rowHeights: tableProps.rowHeights,
-                                    data: tableProps.data
+                                    data: tableProps.data,
+                                    lastQuery: (component.dataBinding && typeof component.dataBinding === 'string')
+                                        ? (JSON.parse(component.dataBinding).sql || null)
+                                        : (component.dataBinding?.sql || null)
                                 });
                                 
                                 // Store reference globally
@@ -4048,6 +4060,26 @@
                             }
                             return;
                         default:
+                            if (component.componentType === 'barChart') {
+                                if (window.BarChart) {
+                                    const chart = new BarChart({
+                                        id: component.id,
+                                        position: { x: component.positionX, y: component.positionY },
+                                        size: { width: component.width || 400, height: component.height || 240 },
+                                        properties: (typeof component.properties === 'string') ? JSON.parse(component.properties) : (component.properties || {}),
+                                        dataBinding: (typeof component.dataBinding === 'string') ? JSON.parse(component.dataBinding) : (component.dataBinding || null)
+                                    });
+                                    window.charts = window.charts || {};
+                                    window.charts[component.id] = chart;
+                                    // Context menu to bind data
+                                    chart.container.addEventListener('contextmenu', (e) => {
+                                        e.preventDefault();
+                                        showChartBindingDialog(chart);
+                                    });
+                                    chart.refresh();
+                                    return;
+                                }
+                            }
                             console.warn('Unknown component type:', component.componentType);
                             return;
                     }
@@ -4207,7 +4239,7 @@
                     }
                 });
                 
-                // Phase 7: Also extract ExcelTable data
+                // Phase 7+: Also extract ExcelTable data (with binding info)
                 if (window.excelTables) {
                     for (const [tableId, excelTable] of Object.entries(window.excelTables)) {
                         const tableData = excelTable.serialize();
@@ -4227,7 +4259,26 @@
                                 rowHeights: tableData.rowHeights,
                                 data: tableData.data
                             }),
-                            dataBinding: null,
+                            dataBinding: excelTable.lastQuery ? JSON.stringify({ type: 'sql', sql: excelTable.lastQuery }) : null,
+                            zIndex: 0,
+                            isVisible: true
+                        });
+                    }
+                }
+                // Serialize overlay chart components
+                if (window.charts) {
+                    for (const [chartId, chart] of Object.entries(window.charts)) {
+                        const props = chart.properties || {};
+                        const bind = chart.dataBinding || null;
+                        components.push({
+                            id: chartId,
+                            componentType: 'barChart',
+                            positionX: Math.round(chart.position.x),
+                            positionY: Math.round(chart.position.y),
+                            width: Math.round(chart.size.width),
+                            height: Math.round(chart.size.height),
+                            properties: JSON.stringify(props),
+                            dataBinding: bind ? JSON.stringify(bind) : null,
                             zIndex: 0,
                             isVisible: true
                         });
@@ -4342,10 +4393,203 @@
                 });
             }
 
+            function showChartBindingDialog(chart) {
+                const existing = chart.dataBinding || { type: 'sql', sql: '', mapping: { xField: '', yFields: [], seriesField: '' } };
+                const dialog = $(`
+                  <div class="modal fade" id="chartBindDialog" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Bind Data (Chart)</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="d-flex gap-3">
+                            <div class="flex-fill" style="min-width:320px; max-width:420px;">
+                              <div class="mb-2"><button class="btn btn-sm btn-outline-secondary" id="cb-load">Load Schema</button></div>
+                              <div class="mb-2">
+                                <label class="form-label">Table</label>
+                                <select id="cb-table" class="form-select"><option value="">-- select --</option></select>
+                              </div>
+                              <div class="mb-2">
+                                <label class="form-label">xField</label>
+                                <select id="cb-x" class="form-select"></select>
+                              </div>
+                              <div class="mb-2">
+                                <label class="form-label">yFields</label>
+                                <div id="cb-y-list" class="border rounded p-2" style="max-height:160px; overflow:auto"></div>
+                              </div>
+                              <div class="row g-2">
+                                <div class="col">
+                                  <label class="form-label">seriesField</label>
+                                  <select id="cb-series" class="form-select"><option value="">(none)</option></select>
+                                </div>
+                                <div class="col">
+                                  <label class="form-label">Aggregation</label>
+                                  <select id="cb-agg" class="form-select">
+                                    <option value="sum">Sum</option>
+                                    <option value="avg">Average</option>
+                                    <option value="count">Count</option>
+                                    <option value="max">Max</option>
+                                    <option value="min">Min</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div class="mt-2"><button class="btn btn-sm btn-success" id="cb-gen">Generate</button></div>
+                            </div>
+                            <div class="flex-fill">
+                              <label class="form-label">Generated SQL</label>
+                              <textarea id="cb-sql" class="form-control" rows="10" placeholder="SELECT ..."></textarea>
+                              <div id="cb-error" class="text-danger mt-2" style="display:none"></div>
+                              <div id="cb-preview" class="mt-3" style="max-height:240px; overflow:auto; display:none"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          <button type="button" class="btn btn-outline-primary" id="cb-test">Preview</button>
+                          <button type="button" class="btn btn-success" id="cb-save">Save Binding</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>`);
+
+                $('body').append(dialog);
+                const $sql = dialog.find('#cb-sql');
+                const $err = dialog.find('#cb-error');
+                const $prev = dialog.find('#cb-preview');
+                const $table = dialog.find('#cb-table');
+                const $x = dialog.find('#cb-x');
+                const $yList = dialog.find('#cb-y-list');
+                const $series = dialog.find('#cb-series');
+                const $agg = dialog.find('#cb-agg');
+
+                $sql.val(existing.sql || '');
+
+                dialog.modal('show');
+                dialog.on('hidden.bs.modal', () => dialog.remove());
+
+                dialog.find('#cb-load').on('click', async () => {
+                    try {
+                        const res = await fetch('/api/ReportWizard/data/schema');
+                        const json = await res.json();
+                        if (!json.success) throw new Error(json.error || 'Load schema failed');
+                        const tables = json.tables || [];
+                        $table.empty().append('<option value="">-- select --</option>');
+                        tables.forEach(t=> $table.append(`<option value="${t.name}">${t.name}</option>`));
+                    } catch (e) {
+                        $err.text(String(e.message || e)).show();
+                    }
+                });
+
+                $table.on('change', () => {
+                    const tbl = $table.val();
+                    if (!tbl) return;
+                    // find selected table columns by reusing previously fetched schema in json (quick fetch again)
+                    fetch('/api/ReportWizard/data/schema').then(r=>r.json()).then(json => {
+                        const t = (json.tables||[]).find(x=>x.name===tbl);
+                        if (!t) return;
+                        $x.empty();
+                        $series.empty().append('<option value="">(none)</option>');
+                        $yList.empty();
+                        (t.columns||[]).forEach(c=>{
+                            $x.append(`<option value="${c.name}">${c.name}</option>`);
+                            $series.append(`<option value="${c.name}">${c.name}</option>`);
+                            const id = `cb-y-${c.name}`;
+                            $yList.append(`<div class="form-check"><input class="form-check-input" type="checkbox" id="${id}" data-col="${c.name}"><label class="form-check-label" for="${id}">${c.name}</label></div>`);
+                        });
+                    });
+                });
+
+                dialog.find('#cb-gen').on('click', () => {
+                    const tbl = $table.val();
+                    const xField = $x.val();
+                    const seriesField = $series.val();
+                    const yFields = [];
+                    $yList.find('input[type=checkbox]:checked').each(function(){ yFields.push($(this).data('col')); });
+                    if (!tbl || !xField || yFields.length === 0) { $err.text('Pick table, xField, and at least one yField.').show(); return; }
+                    const agg = $agg.val();
+                    const selectParts = [`[${xField}]`];
+                    if (seriesField) selectParts.push(`[${seriesField}]`);
+                    yFields.forEach(y=> selectParts.push(`${agg.toUpperCase()}([${y}]) AS [${y}]`));
+                    const groupBy = seriesField ? `[${xField}], [${seriesField}]` : `[${xField}]`;
+                    const sql = `SELECT ${selectParts.join(', ')} FROM ${tbl} GROUP BY ${groupBy} ORDER BY [${xField}]`;
+                    $sql.val(sql);
+                    $err.hide();
+                });
+
+                dialog.find('#cb-test').on('click', async () => {
+                    $err.hide().text('');
+                    $prev.hide().empty();
+                    try {
+                        const res = await fetch('/api/chart/preview', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ dataBinding: { type: 'sql', sql: $sql.val() }, maxRows: 500 })
+                        });
+                        const json = await res.json();
+                        if (!json.success) throw new Error(json.error || 'Preview failed');
+                        const cols = json.columns || [];
+                        const rows = json.rows || [];
+                        let html = '<table class="table table-sm"><thead><tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+                        rows.forEach(r=>{ html += '<tr>' + cols.map(c=>`<td>${r[c] ?? ''}</td>`).join('') + '</tr>'; });
+                        html += '</tbody></table>';
+                        $prev.html(html).show();
+                    } catch (e) {
+                        $err.text(String(e.message || e)).show();
+                    }
+                });
+
+                dialog.find('#cb-save').on('click', () => {
+                    // Derive mapping from current selections
+                    const xField = $x.val();
+                    const seriesField = $series.val() || null;
+                    const yFields = [];
+                    $yList.find('input[type=checkbox]:checked').each(function(){ yFields.push($(this).data('col')); });
+                    const bind = { type: 'sql', sql: $sql.val(), mapping: { xField, yFields, seriesField } };
+                    chart.dataBinding = bind;
+                    chart.refresh();
+                    dialog.modal('hide');
+                });
+            }
+
             function showReportPreviewDialog(preview) {
-                const previewWindow = window.open('', '_blank', 'width=1000,height=700');
-                previewWindow.document.write(preview.htmlContent);
-                previewWindow.document.close();
+                const html = (preview && preview.htmlContent) ? preview.htmlContent : `<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Report Preview</title>
+    <style>body{font-family:Segoe UI,Arial,sans-serif;margin:0;padding:16px;background:#f8f9fa;color:#333}</style>
+  </head>
+  <body>
+    <h3>Nothing to preview yet</h3>
+    <p>The report has no rendered content. Add components and try again.</p>
+  </body>
+ </html>`;
+
+                const $modal = $(`
+                  <div class="modal fade" id="reportPreviewModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Report Preview</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-0">
+                          <iframe id="reportPreviewFrame" style="width:100%;height:70vh;border:0;"></iframe>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>`);
+
+                $('body').append($modal);
+                const frame = $modal.find('#reportPreviewFrame')[0];
+                const doc = frame.contentDocument || frame.contentWindow.document;
+                doc.open();
+                doc.write(html);
+                doc.close();
+                $modal.on('hidden.bs.modal', () => $modal.remove());
+                $modal.modal('show');
             }
 
             function showLoadingDialog(message) {
@@ -4617,17 +4861,24 @@
                 }
 
                 try {
-                    showLoadingDialog('Executing report...');
-                    
-                    const response = await fetch(`?handler=ExecuteReport&reportId=${reportId}`);
-                    const result = await response.json();
-                    
+                    // Auto-refresh bound tables first
+                    showLoadingDialog('Refreshing data...');
+                    if (window.excelTables) {
+                        const refreshPromises = Object.values(window.excelTables).map(t => t.refreshFromSql && t.refreshFromSql());
+                        await Promise.all(refreshPromises);
+                    }
                     hideLoadingDialog();
-                    
-                    if (result.success) {
-                        showReportDataDialog(result.data);
+
+                    // Use the same renderer as Preview so the full report layout is shown
+                    showLoadingDialog('Executing report...');
+                    const response = await fetch(`?handler=PreviewReport&reportId=${reportId}`);
+                    const result = await response.json();
+                    hideLoadingDialog();
+                    if (result.success && result.preview && result.preview.htmlContent) {
+                        showReportPreviewDialog(result.preview);
                     } else {
-                        alert('Error executing report: ' + result.error);
+                        const payload = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+                        alert('Execute returned no content. Details: ' + payload);
                     }
                 } catch (error) {
                     hideLoadingDialog();
@@ -4834,6 +5085,30 @@
             $('#showHelp').click(function() {
                 showKeyboardShortcuts();
             });
+
+            // Load Chart.js (CDN) and chart components if not present
+            (function ensureChartsLoaded() {
+                function addScript(src) {
+                    return new Promise((resolve) => {
+                        const s = document.createElement('script');
+                        s.src = src; s.async = true; s.onload = resolve; document.head.appendChild(s);
+                    });
+                }
+                function addStyle(href) {
+                    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l);
+                }
+                addStyle('/wwwroot/css/charts.css'.replace('/wwwroot',''));
+                const tasks = [];
+                if (!window.Chart) {
+                    tasks.push(addScript('https://cdn.jsdelivr.net/npm/chart.js'));
+                }
+                tasks.push(addScript('/wwwroot/js/charts/chart-base.js'.replace('/wwwroot','')));
+                tasks.push(addScript('/wwwroot/js/charts/bar-chart.js'.replace('/wwwroot','')));
+                Promise.all(tasks).then(() => { window.charts = window.charts || {}; });
+            })();
+
+            // Expose binding dialog globally for chart modules
+            window.showChartBindingDialog = showChartBindingDialog;
             
             // F1 key for help
             $(document).keydown(function(e) {

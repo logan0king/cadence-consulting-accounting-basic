@@ -1,6 +1,10 @@
 {
   "Files": [
     {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\charts.css",
+      "PackagePath": "staticwebassets\\css\\charts.css"
+    },
+    {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\excel-table.css",
       "PackagePath": "staticwebassets\\css\\excel-table.css"
     },
@@ -15,6 +19,14 @@
     {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\css\\themes\\journal.css",
       "PackagePath": "staticwebassets\\css\\themes\\journal.css"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\bar-chart.js",
+      "PackagePath": "staticwebassets\\js\\charts\\bar-chart.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\chart-base.js",
+      "PackagePath": "staticwebassets\\js\\charts\\chart-base.js"
     },
     {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\excel-table.js",
