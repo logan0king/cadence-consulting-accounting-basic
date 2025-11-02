@@ -37,7 +37,7 @@ class ChartBase {
     canvas.style.top = '0';
     this.container.appendChild(canvas);
 
-    const canvasHost = document.querySelector('#designer-canvas-host') || document.body;
+    const canvasHost = document.querySelector('.canvas-wrapper') || document.body;
     canvasHost.appendChild(this.container);
 
     this.ctx = canvas.getContext('2d');
@@ -48,13 +48,6 @@ class ChartBase {
       e.preventDefault();
       if (window.showChartBindingDialog) window.showChartBindingDialog(this);
     });
-
-    // If no binding yet, prompt user immediately (first-run UX)
-    if (!this.dataBinding) {
-      setTimeout(() => {
-        if (window.showChartBindingDialog) window.showChartBindingDialog(this);
-      }, 0);
-    }
   }
 
   async refresh() {

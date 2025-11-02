@@ -21,12 +21,36 @@
       "PackagePath": "staticwebassets\\css\\themes\\journal.css"
     },
     {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\area-chart.js",
+      "PackagePath": "staticwebassets\\js\\charts\\area-chart.js"
+    },
+    {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\bar-chart.js",
       "PackagePath": "staticwebassets\\js\\charts\\bar-chart.js"
     },
     {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\chart-base.js",
       "PackagePath": "staticwebassets\\js\\charts\\chart-base.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\doughnut-chart.js",
+      "PackagePath": "staticwebassets\\js\\charts\\doughnut-chart.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\line-chart.js",
+      "PackagePath": "staticwebassets\\js\\charts\\line-chart.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\pie-chart.js",
+      "PackagePath": "staticwebassets\\js\\charts\\pie-chart.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\radar-chart.js",
+      "PackagePath": "staticwebassets\\js\\charts\\radar-chart.js"
+    },
+    {
+      "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\charts\\scatter-chart.js",
+      "PackagePath": "staticwebassets\\js\\charts\\scatter-chart.js"
     },
     {
       "Id": "E:\\Cadence Consulting Accounting Basic\\wwwroot\\js\\excel-table.js",

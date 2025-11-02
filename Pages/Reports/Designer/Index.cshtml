@@ -1472,6 +1472,46 @@
                         // Don't add to Fabric canvas - ExcelTable is HTML overlay
                         return;
                     case 'chart':
+                        // Create actual chart overlay (like table)
+                        const chartType = options.chartType || 'bar';
+                        let ChartClass = null;
+                        
+                        // Map chart types to their classes
+                        const chartClassMap = {
+                            'bar': BarChart,
+                            'line': LineChart,
+                            'pie': PieChart,
+                            'doughnut': DoughnutChart,
+                            'area': AreaChart,
+                            'scatter': ScatterChart,
+                            'radar': RadarChart
+                        };
+                        
+                        ChartClass = chartClassMap[chartType];
+                        
+                        if (ChartClass && typeof ChartClass !== 'undefined') {
+                            const chartId = generateGuid();
+                            const chart = new ChartClass({
+                                id: chartId,
+                                position: { x: defaultOptions.left, y: defaultOptions.top },
+                                size: { width: options.width || 400, height: options.height || 240 },
+                                properties: {},
+                                dataBinding: null
+                            });
+                            if (!window.charts) {
+                                window.charts = {};
+                            }
+                            window.charts[chartId] = chart;
+                            // Auto-open binding dialog for new charts
+                            setTimeout(() => {
+                                if (window.showChartBindingDialog) {
+                                    window.showChartBindingDialog(chart);
+                                }
+                            }, 100);
+                            // Don't add Fabric rect - chart is HTML overlay
+                            return;
+                        }
+                        // Fallback placeholder if chart type not supported
                         component = new fabric.Rect({
                             ...defaultOptions,
                             width: options.width || 300,
@@ -4060,9 +4100,24 @@
                             }
                             return;
                         default:
-                            if (component.componentType === 'barChart') {
-                                if (window.BarChart) {
-                                    const chart = new BarChart({
+                            // Handle all chart types (barChart, lineChart, pieChart, etc.)
+                            const chartComponentType = component.componentType;
+                            if (chartComponentType && chartComponentType.endsWith('Chart')) {
+                                // Extract chart type from componentType (e.g., 'barChart' -> 'bar')
+                                const chartType = chartComponentType.replace('Chart', '');
+                                const chartClassMap = {
+                                    'bar': BarChart,
+                                    'line': LineChart,
+                                    'pie': PieChart,
+                                    'doughnut': DoughnutChart,
+                                    'area': AreaChart,
+                                    'scatter': ScatterChart,
+                                    'radar': RadarChart
+                                };
+                                
+                                const ChartClass = chartClassMap[chartType];
+                                if (ChartClass && typeof ChartClass !== 'undefined') {
+                                    const chart = new ChartClass({
                                         id: component.id,
                                         position: { x: component.positionX, y: component.positionY },
                                         size: { width: component.width || 400, height: component.height || 240 },
@@ -4074,10 +4129,14 @@
                                     // Context menu to bind data
                                     chart.container.addEventListener('contextmenu', (e) => {
                                         e.preventDefault();
-                                        showChartBindingDialog(chart);
+                                        if (window.showChartBindingDialog) {
+                                            window.showChartBindingDialog(chart);
+                                        }
                                     });
                                     chart.refresh();
                                     return;
+                                } else {
+                                    console.warn('Chart class not found for type:', chartType);
                                 }
                             }
                             console.warn('Unknown component type:', component.componentType);
@@ -4270,9 +4329,12 @@
                     for (const [chartId, chart] of Object.entries(window.charts)) {
                         const props = chart.properties || {};
                         const bind = chart.dataBinding || null;
+                        const chartType = chart.chartType || 'bar';
+                        // Map chartType to componentType (e.g., 'bar' -> 'barChart', 'line' -> 'lineChart')
+                        const componentType = chartType + 'Chart';
                         components.push({
                             id: chartId,
-                            componentType: 'barChart',
+                            componentType: componentType,
                             positionX: Math.round(chart.position.x),
                             positionY: Math.round(chart.position.y),
                             width: Math.round(chart.size.width),
@@ -4394,9 +4456,16 @@
             }
 
             function showChartBindingDialog(chart) {
+                // Remove any existing chart binding dialogs (all variations)
+                $('[id^="chartBindDialog"]').remove();
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                
                 const existing = chart.dataBinding || { type: 'sql', sql: '', mapping: { xField: '', yFields: [], seriesField: '' } };
+                let schemaItems = []; // Store schema items for reuse
+                const dialogId = `chartBindDialog_${chart.id || Date.now()}`;
                 const dialog = $(`
-                  <div class="modal fade" id="chartBindDialog" tabindex="-1">
+                  <div class="modal fade" id="${dialogId}" tabindex="-1">
                     <div class="modal-dialog modal-xl">
                       <div class="modal-content">
                         <div class="modal-header">
@@ -4458,7 +4527,7 @@
                 const $sql = dialog.find('#cb-sql');
                 const $err = dialog.find('#cb-error');
                 const $prev = dialog.find('#cb-preview');
-                const $table = dialog.find('#cb-table');
+                let $table = dialog.find('#cb-table');
                 const $x = dialog.find('#cb-x');
                 const $yList = dialog.find('#cb-y-list');
                 const $series = dialog.find('#cb-series');
@@ -4466,38 +4535,81 @@
 
                 $sql.val(existing.sql || '');
 
-                dialog.modal('show');
+                // Ensure modal appears above charts
+                dialog.css('z-index', '9999');
+                dialog.on('shown.bs.modal', () => {
+                    dialog.css('z-index', '9999');
+                    $('.modal-backdrop').last().css('z-index', '9998');
+                    // Refresh element references after modal is fully shown
+                    $table = dialog.find('#cb-table');
+                });
                 dialog.on('hidden.bs.modal', () => dialog.remove());
+                dialog.modal('show');
 
                 dialog.find('#cb-load').on('click', async () => {
+                    console.log('Load Schema clicked');
+                    $err.hide().text('');
+                    const $btn = dialog.find('#cb-load');
+                    const originalText = $btn.text();
+                    $btn.prop('disabled', true).text('Loading...');
                     try {
+                        console.log('Fetching /api/ReportWizard/data/schema');
                         const res = await fetch('/api/ReportWizard/data/schema');
+                        console.log('Response status:', res.status);
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                        }
                         const json = await res.json();
-                        if (!json.success) throw new Error(json.error || 'Load schema failed');
-                        const tables = json.tables || [];
-                        $table.empty().append('<option value="">-- select --</option>');
-                        tables.forEach(t=> $table.append(`<option value="${t.name}">${t.name}</option>`));
+                        console.log('Response JSON:', json);
+                        if (!json.success) {
+                            throw new Error(json.error || 'Load schema failed');
+                        }
+                        const items = json.items || [];
+                        console.log('Items array:', items);
+                        console.log('First item:', items[0]);
+                        if (items.length === 0) {
+                            $err.text('No tables found in database.').show();
+                            return;
+                        }
+                        schemaItems = items; // Store for reuse
+                        // Re-find the select element in case Bootstrap moved the modal
+                        const $tableSelect = dialog.find('#cb-table');
+                        console.log('$table element:', $tableSelect.length, $tableSelect[0]);
+                        if ($tableSelect.length === 0) {
+                            throw new Error('Could not find table select element');
+                        }
+                        $tableSelect.empty().append('<option value="">-- select --</option>');
+                        items.forEach(item => {
+                            const tableValue = `${item.schema}.${item.table}`;
+                            console.log('Adding table option:', tableValue, 'item:', item);
+                            $tableSelect.append(`<option value="${tableValue}">${tableValue}</option>`);
+                        });
+                        console.log('Table dropdown options count:', $tableSelect.find('option').length);
+                        // Update the $table reference for future use
+                        $table = $tableSelect;
+                        $err.hide();
+                        console.log('Schema loaded:', items.length, 'tables');
                     } catch (e) {
-                        $err.text(String(e.message || e)).show();
+                        console.error('Load schema error:', e);
+                        $err.text('Error: ' + String(e.message || e)).show();
+                    } finally {
+                        $btn.prop('disabled', false).text(originalText);
                     }
                 });
 
                 $table.on('change', () => {
                     const tbl = $table.val();
-                    if (!tbl) return;
-                    // find selected table columns by reusing previously fetched schema in json (quick fetch again)
-                    fetch('/api/ReportWizard/data/schema').then(r=>r.json()).then(json => {
-                        const t = (json.tables||[]).find(x=>x.name===tbl);
-                        if (!t) return;
-                        $x.empty();
-                        $series.empty().append('<option value="">(none)</option>');
-                        $yList.empty();
-                        (t.columns||[]).forEach(c=>{
-                            $x.append(`<option value="${c.name}">${c.name}</option>`);
-                            $series.append(`<option value="${c.name}">${c.name}</option>`);
-                            const id = `cb-y-${c.name}`;
-                            $yList.append(`<div class="form-check"><input class="form-check-input" type="checkbox" id="${id}" data-col="${c.name}"><label class="form-check-label" for="${id}">${c.name}</label></div>`);
-                        });
+                    if (!tbl || schemaItems.length === 0) return;
+                    const item = schemaItems.find(i => `${i.schema}.${i.table}` === tbl);
+                    if (!item) return;
+                    $x.empty();
+                    $series.empty().append('<option value="">(none)</option>');
+                    $yList.empty();
+                    (item.columns || []).forEach(c => {
+                        $x.append(`<option value="${c.name}">${c.name}</option>`);
+                        $series.append(`<option value="${c.name}">${c.name}</option>`);
+                        const id = `cb-y-${c.name}`;
+                        $yList.append(`<div class="form-check"><input class="form-check-input" type="checkbox" id="${id}" data-col="${c.name}"><label class="form-check-label" for="${id}">${c.name} <span style="color:#888;">(${c.dataType})</span></label></div>`);
                     });
                 });
 
@@ -5104,6 +5216,12 @@
                 }
                 tasks.push(addScript('/wwwroot/js/charts/chart-base.js'.replace('/wwwroot','')));
                 tasks.push(addScript('/wwwroot/js/charts/bar-chart.js'.replace('/wwwroot','')));
+                tasks.push(addScript('/wwwroot/js/charts/line-chart.js'.replace('/wwwroot','')));
+                tasks.push(addScript('/wwwroot/js/charts/pie-chart.js'.replace('/wwwroot','')));
+                tasks.push(addScript('/wwwroot/js/charts/doughnut-chart.js'.replace('/wwwroot','')));
+                tasks.push(addScript('/wwwroot/js/charts/area-chart.js'.replace('/wwwroot','')));
+                tasks.push(addScript('/wwwroot/js/charts/scatter-chart.js'.replace('/wwwroot','')));
+                tasks.push(addScript('/wwwroot/js/charts/radar-chart.js'.replace('/wwwroot','')));
                 Promise.all(tasks).then(() => { window.charts = window.charts || {}; });
             })();
 

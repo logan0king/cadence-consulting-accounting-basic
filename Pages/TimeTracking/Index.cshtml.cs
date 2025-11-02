@@ -132,17 +132,47 @@ namespace CadenceAccounting.Pages.TimeTracking
             }
         }
 
-        public async Task<IActionResult> OnPostDeleteAsync(Guid id)
+        public async Task<IActionResult> OnPostDeleteAsync()
         {
             try
             {
-                await _timeEntryService.DeleteTimeEntryAsync(id);
+                _logger.LogInformation("DeleteTimeEntry POST received");
+                _logger.LogInformation("Request Content-Type: {ContentType}", Request.ContentType);
+                _logger.LogInformation("Request Method: {Method}", Request.Method);
+
+                // Get form data
+                var formData = Request.Form;
+                _logger.LogInformation("Form data: {FormData}", string.Join(", ", formData.Select(kv => $"{kv.Key}=[{string.Join(",", kv.Value.ToArray())}]")));
+
+                // Extract and validate required fields
+                if (!Guid.TryParse(formData["id"].FirstOrDefault(), out var timeEntryId))
+                {
+                    _logger.LogWarning("Invalid id in form data");
+                    TempData["ErrorMessage"] = "Invalid time entry ID.";
+                    return RedirectToPage();
+                }
+
+                _logger.LogInformation("Attempting to delete time entry {TimeEntryId}", timeEntryId);
+
+                // Delete the time entry using raw SQL to avoid trigger conflicts
+                var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
+                    "DELETE FROM TimeEntries WHERE Id = {0}",
+                    timeEntryId);
+                    
+                if (rowsAffected == 0)
+                {
+                    _logger.LogWarning("Time entry {TimeEntryId} not found or already deleted", timeEntryId);
+                    TempData["ErrorMessage"] = "Time entry not found or already deleted.";
+                    return RedirectToPage();
+                }
+
+                _logger.LogInformation("Time entry {TimeEntryId} deleted successfully", timeEntryId);
                 TempData["SuccessMessage"] = "Time entry deleted successfully!";
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting time entry {Id}", id);
-                TempData["ErrorMessage"] = "An error occurred while deleting the time entry.";
+                _logger.LogError(ex, "Error deleting time entry");
+                TempData["ErrorMessage"] = "An error occurred while deleting the time entry. Please try again.";
             }
 
             return RedirectToPage();

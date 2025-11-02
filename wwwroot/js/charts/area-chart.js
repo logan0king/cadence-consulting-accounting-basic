@@ -1,7 +1,9 @@
-class BarChart extends ChartBase {
+/* global ChartBase */
+
+class AreaChart extends ChartBase {
   constructor(options) {
     super(options);
-    this.chartType = 'bar';
+    this.chartType = 'area';
     if (this.dataBinding) {
       this.refresh();
     }
@@ -32,27 +34,50 @@ class BarChart extends ChartBase {
     let idx = 0;
     for (const [series, map] of seriesToData) {
       const data = labels.map(l => map.get(l) || 0);
-      datasets.push({ label: String(series), data, backgroundColor: palette[idx % palette.length] });
+      const color = palette[idx % palette.length];
+      datasets.push({
+        label: String(series),
+        data,
+        borderColor: color,
+        backgroundColor: color + '66', // 40% opacity for area fill
+        borderWidth: this.properties?.area?.borderWidth || 2,
+        fill: true,
+        tension: this.properties?.area?.tension || 0.4,
+        pointRadius: this.properties?.area?.showPoints !== false ? (this.properties?.area?.pointRadius || 3) : 0
+      });
       idx++;
     }
 
-    const stacked = !!(this.properties?.bar?.stacked);
-    const horizontal = !!(this.properties?.bar?.horizontal);
+    const stacked = !!(this.properties?.area?.stacked);
 
     return {
-      type: horizontal ? 'bar' : 'bar',
+      type: 'line', // Area chart is a line chart with fill: true
       data: { labels, datasets },
       options: {
-        indexAxis: horizontal ? 'y' : 'x',
         responsive: true,
         maintainAspectRatio: false,
-        scales: { x: { stacked }, y: { stacked } },
-        plugins: { legend: { display: true } }
+        scales: {
+          x: {
+            stacked,
+            title: { display: true, text: xField }
+          },
+          y: {
+            stacked,
+            beginAtZero: this.properties?.area?.beginAtZero !== false,
+            title: { display: true, text: yFields.join(', ') }
+          }
+        },
+        plugins: {
+          legend: { display: datasets.length > 1 },
+          title: {
+            display: true,
+            text: this.properties.title || 'Area Chart'
+          }
+        }
       }
     };
   }
 }
 
-window.BarChart = BarChart;
-
+window.AreaChart = AreaChart;
 

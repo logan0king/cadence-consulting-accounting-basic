@@ -1,7 +1,9 @@
-class BarChart extends ChartBase {
+/* global ChartBase */
+
+class LineChart extends ChartBase {
   constructor(options) {
     super(options);
-    this.chartType = 'bar';
+    this.chartType = 'line';
     if (this.dataBinding) {
       this.refresh();
     }
@@ -32,27 +34,45 @@ class BarChart extends ChartBase {
     let idx = 0;
     for (const [series, map] of seriesToData) {
       const data = labels.map(l => map.get(l) || 0);
-      datasets.push({ label: String(series), data, backgroundColor: palette[idx % palette.length] });
+      datasets.push({
+        label: String(series),
+        data,
+        borderColor: palette[idx % palette.length],
+        backgroundColor: palette[idx % palette.length] + '33', // 20% opacity
+        borderWidth: this.properties?.line?.borderWidth || 2,
+        fill: this.properties?.line?.fill !== false,
+        tension: this.properties?.line?.tension || 0.4,
+        pointRadius: this.properties?.line?.showPoints !== false ? (this.properties?.line?.pointRadius || 3) : 0
+      });
       idx++;
     }
 
-    const stacked = !!(this.properties?.bar?.stacked);
-    const horizontal = !!(this.properties?.bar?.horizontal);
-
     return {
-      type: horizontal ? 'bar' : 'bar',
+      type: 'line',
       data: { labels, datasets },
       options: {
-        indexAxis: horizontal ? 'y' : 'x',
         responsive: true,
         maintainAspectRatio: false,
-        scales: { x: { stacked }, y: { stacked } },
-        plugins: { legend: { display: true } }
+        scales: {
+          x: {
+            title: { display: true, text: xField }
+          },
+          y: {
+            beginAtZero: this.properties?.line?.beginAtZero !== false,
+            title: { display: true, text: yFields.join(', ') }
+          }
+        },
+        plugins: {
+          legend: { display: datasets.length > 1 },
+          title: {
+            display: true,
+            text: this.properties.title || 'Line Chart'
+          }
+        }
       }
     };
   }
 }
 
-window.BarChart = BarChart;
-
+window.LineChart = LineChart;
 
